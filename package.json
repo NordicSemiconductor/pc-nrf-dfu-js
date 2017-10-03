@@ -1,0 +1,25 @@
+{
+  "name": "pc-nrf-dfu-js",
+  "version": "0.1.0",
+  "description": "JS implementation of the nRF DFU protocol",
+  "esnext:main": "src/index.js",
+  "main": "dist/nrf-dfu.cjs.js",
+  "module": "dist/nrf-dfu.es6.js",
+  "browser": "dist/nrf-dfu.browser.js",
+  "author": "Iván Sánchez Ortega <ivan@sanchezortega.es>",
+  "license": "Propietary",
+  "private": true,
+  "scripts": {
+    "rollup": "rollup -c rollup.config.js"
+  },
+  "dependencies": {
+    "crc": "https://github.com/IvanSanchez/node-crc.git#no-buffer"
+  },
+  "devDependencies": {
+    "jasmine": "^2.8.0",
+    "rollup": "^0.50.0",
+    "rollup-plugin-node-builtins": "^2.1.2",
+    "rollup-plugin-commonjs": "^8.2.1",
+    "rollup-plugin-node-resolve": "^3.0.0"
+  }
+}

@@ -1,0 +1,54 @@
+
+// Convert this into a graphic via https://yuml.me/diagram/class/draw
+
+
+
+[DfuUpdates|updates|constructor(updates);$fromZipFile(filepath)]
+
+[note:An update is a tuple of init packet plus firmware image. The constructor takes an ordered list of updates. This can be an array of arrays of Uint8Arrays.]-[DfuUpdates]
+
+
+[DfuOperation|progressGenerator:Generator readonly|constructor(dfuUpdates dfuTransport autoStart);start()]
+
+
+[DfuAbstractTransport|progressGenerator:Generator readonly|sendInitPacket(bytes); sendFirmwareImage(bytes); _createObject(type size); _writeObject(req reqLength); _crcObject(); _executeObject(); _selectObject(type); _updateProgress(bytes)]
+
+[note:A transport must define the 5 private methods. They map to the nRF SDK's 'DFU request operations'. A specific transport might do additional logic. i.e. splitting the writeObject request into smaller wire packets and checking CRCs for them.]-[DfuAbstractTransport]
+
+[note:The abstract transport implements the logic to split a init packet or a firmware image into 1KiB or 4KiB chunks (as per the _selectObject() return values) and perform several calls to _writeObject().]-[DfuAbstractTransport]
+
+
+
+[DfuOperation]++-[DfuUpdates]
+[DfuOperation]++-[DfuAbstractTransport]
+[DfuAbstractTransport]^-[DfuUartTransport]
+[DfuAbstractTransport]^-[DfuUsbCdcTransport]
+[DfuAbstractTransport]^-[DfuConnectivityBleTransport]
+[DfuAbstractTransport]^-[DfuHciBleTransport]
+[DfuAbstractTransport]^-[DfuSinkTransport]
+
+[DfuSinkTransport||constructor(speed)]
+
+[DfuUartTransport]-[note:UART through plain serial port.]
+[DfuUsbCdcTransport]-[note:UART over USB CDC (AKA serial USB).]
+[DfuConnectivityBleTransport]-[note:BLE through a nRF devKit with connectivity firmware. What pc-nrf-ble-driver currently does. This should implement custom PRN and extra CRC checks and rewinding.]
+[DfuHciBleTransport]-[note:BLE through a desktop or laptop's BL HCI.]
+[DfuSinkTransport]-[note:Send everything into the void while providing progress updates. Only for development & testing of higher-level DFU logic.]
+
+[DfuConnectivityBleTransport]-[note:Service discovery and buttonless DFU are NOT covered here.]
+[DfuHciBleTransport]-[note:Service discovery and buttonless DFU are NOT covered here.]
+
+[DfuUartTransport]-[note:Discovery of available UART ports is not covered here.]
+[DfuUsbCdcTransport]-[note:Discovery of available UART ports is not covered here.]
+
+[note:There is also a use case for performing DFU over a nRF cloud gateway. Let's put that into the 'crazy ideas' pile for now.]
+
+
+[ProgressCounter|nextProgressUpdate:readonly;_current;_target|constructor(targetAmount);advance(amount)]
+
+[DfuOperation]++-[ProgressCounter]
+[DfuAbstractTransport]++-[ProgressCounter]
+
+
+
+
