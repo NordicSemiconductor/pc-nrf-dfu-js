@@ -1,0 +1,1 @@
+The files in this directory have been copied from the Nordic nRF5 SDK v14.0.0. Please refer to http://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.sdk%2Fdita%2Fsdk%2Fnrf5_sdk.html&cp=4_0

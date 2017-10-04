@@ -2,8 +2,8 @@
 // FIXME: Should be `import {crc32} from 'crc'`, https://github.com/alexgorbatchev/node-crc/pull/50
 // import * as crc from 'crc';
 // const crc32 = crc.crc32;
-import {crc32} from 'crc';
-// import crc32 from 'crc/src/crc32';
+// import {crc32} from 'crc';
+import crc32 from 'crc/src/crc32';
 
 
 import ProgressCounter from './ProgressCounter';
@@ -19,7 +19,9 @@ import ProgressCounter from './ProgressCounter';
 
 export default class DfuAbstractTransport {
     constructor() {
-//         throw new Error("Cannot instantiate DfuAbstractTransport, use a concrete subclass instead.");
+        if (this.constructor === DfuAbstractTransport) {
+            throw new Error("Cannot instantiate DfuAbstractTransport, use a concrete subclass instead.");
+        }
     }
 
     // Given a Uint8Array, sends it as an init payload / "command object".

@@ -1,4 +1,7 @@
 
+import * as JSZip from 'jszip';
+import fs from 'fs';
+
 /**
  * Represents a set of DFU updates.
  *
@@ -22,9 +25,9 @@
  * An instance of DfuUpdates might be shared by several operations using different
  * transports at the same time.
  *
- * The constructor expects an Array of Arrays of two `Uint8Arrays`. `updates` is an
- * Array of `update`s, and each `update` is an Array of two elements, each element
- * being an `Uint8Array`.
+ * The constructor expects an Array of Objects containing two `Uint8Arrays`. `updates` is an
+ * Array of `update`s, and each `update` is an Object of the form
+ * `{ initPacket: Uint8Array, firmwareImage: Uint8Array }`.
  *
  */
 
@@ -44,10 +47,56 @@ export default class DfuUpdates {
      * a valid manifest.
      *
      * @param String path The full file path to the .zip file
-     * @return An instance of DfuUpdates
+     * @return A Promise to an instance of DfuUpdates
      */
     static fromZipFile(path) {
-        // FIXME
+        return this._loadZip(path).then((zippedFiles)=>{
+            return zippedFiles.file('manifest.json').async('text').then((manifestString)=>{
+
+                console.log('Unzipped manifest: ', manifestString);
+
+                return JSON.parse(manifestString).manifest;
+            }).then((manifestJson)=>{
+                // The manifest should have up to 2 properties along
+                // "softdevice", "bootloader", "softdevice_bootloader",
+                // or "application". At least that's what the standard
+                // Nordic DFU does, but nothing stops other implementations
+                // from creating more init packets (with more protobuf defs)
+                // and more types of payload. So we don't check for this.
+
+                console.log('Parsed manifest:', manifestJson);
+
+                let updates = Object.entries(manifestJson).map(([, updateJson])=>{
+                    const { dat_file, bin_file } = updateJson;
+                    const initPacketPromise = zippedFiles.file(dat_file).async('uint8array');
+                    const firmwareImagePromise = zippedFiles.file(bin_file).async('uint8array');
+
+                    return Promise.all([initPacketPromise, firmwareImagePromise])
+                    .then(([initPacketBytes, firmwareImageBytes])=>{
+                        return {
+                            initPacket: initPacketBytes,
+                            firmwareImage: firmwareImageBytes
+                        };
+                    })
+                });
+
+                return Promise.all(updates).then(updates=>{
+                    return new DfuUpdates(updates);
+                });
+            });
+        });
+    }
+
+    /**
+     * Gets a Promise to a JSZip object referring to the given path
+     */
+    static _loadZip(path){
+        return new Promise((res, rej)=>{
+            fs.readFile(path, (err, data) => {
+                if (err) { return rej(err); }
+                return res((new JSZip()).loadAsync(data));
+            });
+        });
     }
 
 }

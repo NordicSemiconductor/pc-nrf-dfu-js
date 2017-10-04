@@ -1,9 +1,11 @@
 'use strict';
 
+var nrfDfu;
+
 if (!nrfDfu) {
     nrfDfu = typeof window !== 'undefined' ?
         module.exports : // When running specRunner on a browser
-        require('../src/index');    // When running on node
+        require('../dist/nrf-dfu.cjs');    // When running on node
 }
 
 
@@ -15,10 +17,10 @@ function stringToUint8Array(str) {
 describe("DFU to a sink", function() {
 
     let basicUpdates = new nrfDfu.DfuUpdates([
-        [
-            new stringToUint8Array("Init packet"),
-            new stringToUint8Array("Binary payload")
-        ]
+        {
+            initPacket: new stringToUint8Array("Init packet"),
+            firmwareImage: new stringToUint8Array("Binary payload")
+        }
     ]);
 
 
@@ -26,7 +28,6 @@ describe("DFU to a sink", function() {
 
         let sink = new nrfDfu.DfuTransportSink();
         let dfu = new nrfDfu.DfuOperation(basicUpdates, sink);
-
 
         return dfu.start(); // Returning a Promise lets Jasmine know that this is async.
 

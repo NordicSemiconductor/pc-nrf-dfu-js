@@ -61,9 +61,9 @@ export default class DfuOperation {
             return Promise.resolve();
         }
 
-        return this._transport.sendInitPacket(this._updates[updateNumber][0])
+        return this._transport.sendInitPacket(this._updates[updateNumber].initPacket)
         .then(()=>{
-            return this._transport.sendFirmwareImage(this._updates[updateNumber][1])
+            return this._transport.sendFirmwareImage(this._updates[updateNumber].firmwareImage)
         })
         .then(()=>{
             this._performNextUpdate(updateNumber+1);

@@ -1,6 +1,8 @@
 
 import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
+import builtins from 'rollup-plugin-node-builtins';
+import globals from 'rollup-plugin-node-globals';
 import pkg from './package.json';
 
 export default [
@@ -9,13 +11,19 @@ export default [
         input: 'src/index.js',
         output: {
             file: pkg.browser,
-            format: 'iife'
+            format: 'iife',
+            sourcemap: true
+        },
+        external: ['jszip'],
+        globals: {
+            jszip: 'JSZip'
         },
         name: 'nrfDfu',
         plugins: [
             resolve(), // so Rollup can find `crc32`
-            commonjs()
-//             builtins()
+            commonjs(),
+            builtins(),
+            globals()
         ]
     },
 
@@ -26,7 +34,7 @@ export default [
     // the `targets` option which can specify `dest` and `format`)
     {
         input: 'src/index.js',
-		external: ['buffer'],
+        external: ['buffer', 'fs', 'jszip'],
         output: [
             { file: pkg.main, format: 'cjs' },
             { file: pkg.module, format: 'es' }
