@@ -42,15 +42,37 @@ export default class DfuUpdates {
     }
 
     /**
-     * Instantiates a set of DfuUpdates given the path of a .zip file.
+     * Instantiates a set of DfuUpdates given the *path* of a .zip file.
+     * That .zip file is expected to have been created by nrfutil, having
+     * a valid manifest.
+     * 
+     * This requires your environment to have access to the local filesystem.
+     * (i.e. works in nodejs, not in a web browser)
+     *
+     * @param String path The full file path to the .zip file
+     * @return A Promise to an instance of DfuUpdates
+     */
+    static fromZipFilePath(path) {
+        return new Promise((res, rej)=>{
+            fs.readFile(path, (err, data) => {
+                if (err) { return rej(err); }
+                return res((new JSZip()).loadAsync(data));
+            });
+        });
+    }    
+    
+    /**
+     * Instantiates a set of DfuUpdates given the *contents* of a .zip file,
+     * as an ArrayBuffer, a Uint8Array, Buffer, Blob, or other data type accepted by 
+     * [JSZip](https://stuk.github.io/jszip/documentation/api_jszip/load_async.html).
      * That .zip file is expected to have been created by nrfutil, having
      * a valid manifest.
      *
      * @param String path The full file path to the .zip file
      * @return A Promise to an instance of DfuUpdates
      */
-    static fromZipFile(path) {
-        return this._loadZip(path).then((zippedFiles)=>{
+    static fromZipFile(zipBytes) {
+        return (new JSZip()).loadAsync(zipBytes).then((zippedFiles)=>{
             return zippedFiles.file('manifest.json').async('text').then((manifestString)=>{
 
                 console.log('Unzipped manifest: ', manifestString);
@@ -86,19 +108,6 @@ export default class DfuUpdates {
             });
         });
     }
-
-    /**
-     * Gets a Promise to a JSZip object referring to the given path
-     */
-    static _loadZip(path){
-        return new Promise((res, rej)=>{
-            fs.readFile(path, (err, data) => {
-                if (err) { return rej(err); }
-                return res((new JSZip()).loadAsync(data));
-            });
-        });
-    }
-
 }
 
 

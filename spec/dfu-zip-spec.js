@@ -23,7 +23,7 @@ describe("DfuUpdates", function() {
 
             if (!hasFs) { return pending('No fs support in this environment') }
 
-            return nrfDfu.DfuUpdates.fromZipFile('./spec/test-data/softdevice_bootloader_secure_ble_debug_with_bonds_s132.zip')
+            return nrfDfu.DfuUpdates.fromZipFilePath('./spec/test-data/softdevice_bootloader_secure_ble_debug_with_bonds_s132.zip')
             .then(updates=>{
 //                 console.log(updates._updates[0].initPacket.length);
 
