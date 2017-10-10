@@ -11,6 +11,8 @@ export {DfuUpdates};
 
 import DfuTransportSink from './DfuTransportSink';
 export {DfuTransportSink};
+import DfuTransportSerial from './DfuTransportSerial';
+export {DfuTransportSerial};
 
 import ProgressCounter from './ProgressCounter';
 export {ProgressCounter};

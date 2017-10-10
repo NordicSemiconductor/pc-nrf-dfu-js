@@ -41,9 +41,9 @@ export default class DfuAbstractTransport {
     // ("firmware image"/"data objects")
     _sendPayload(type, bytes) {
         return this._selectObject(type).then(([offset, undefined, chunkSize])=>{
-            if (offset !== 0) {
-                throw new Error('Could not create payload with offset zero');
-            }
+//             if (offset !== 0) {
+//                 throw new Error('Could not create payload with offset zero');
+//             }
 
             return this._sendPayloadChunk(type, bytes, 0, chunkSize, 0);
         });
@@ -68,6 +68,9 @@ export default class DfuAbstractTransport {
         return this._createObject(type, end - start)
         .then(()=>{
             return this._writeObject(subarray, crcSoFar);
+        })
+        .then(()=>{
+            return this._crcObject(end, crcAtChunkEnd);
         })
         .then(([offset, crc])=>{
             if (offset !== end) {
