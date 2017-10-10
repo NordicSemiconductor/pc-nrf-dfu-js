@@ -77,9 +77,9 @@ export default class DfuAbstractTransport {
                 throw new Error(`Expected ${end} bytes to have been sent, actual is ${offset} bytes.`);
             }
 
-            if (crcAtChunkEnd !== crc) {
-                throw new Error(`CRC mismatch after ${end} bytes have been sent.`);
-            }
+//             if (crcAtChunkEnd !== crc) {
+//                 throw new Error(`CRC mismatch after ${end} bytes have been sent: expected ${crcAtChunkEnd}, got ${crc}.`);
+//             }
         })
         .then(()=>{
             this._executeObject();
@@ -87,6 +87,9 @@ export default class DfuAbstractTransport {
         .then(()=>{
             return this._sendPayloadChunk(type, bytes, end, chunkSize, crcAtChunkEnd);
         });
+
+        /// TODO: Add retry logic for failed calls to this._writeObject (should re-create and re-write that same chunk)
+
     }
 
 

@@ -237,28 +237,32 @@ console.log('WriteObject');
         return this._ready().then(()=>{
             return this._writeObjectPiece(bytes, crcSoFar, 0, 0)
         })
-        .catch(()=>{
-            /// Handle failed PRN CRC checks by retrying up to 5 times
-            if (retriesLeft > 0) {
-                return this._writeObject(bytes, crcSoFar, retriesLeft - 1);
-            } else {
-                return Promise.reject('Too many transport failures while sending data');
-            }
-        });
+//         .catch((err)=>{
+//             console.warn('Caught: ', err, '; retrying chunk');
+//
+//             /// Handle failed PRN CRC checks by retrying up to 5 times
+//             if (retriesLeft > 0) {
+//                 return this._writeObject(bytes, crcSoFar, retriesLeft - 1);
+//             } else {
+//                 return Promise.reject('Too many transport failures while sending data');
+//             }
+//         });
     }
 
     // Sends *one* write operation (with up to this._mtu bytes of un-encoded data)
     // Triggers a counter-based PRN confirmation
-    _writeObjectPiece(bytes, crcSoFar, offset, prnCount) {
+    _writeObjectPiece(bytes, crcSoFar, offsetSoFar, prnCount) {
         return this._ready().then(()=>{
 
-            const sendLength = Math.min(this._mtu - 1, bytes.length);
+            //const sendLength = Math.min(this._mtu - 1, bytes.length);
+            const sendLength = 1;   /// DEBUG!!
+
             const bytesToSend = bytes.subarray(0, sendLength);
             const packet = new Uint8Array(sendLength + 1);
             packet.set([0x08], 0);    // "Write" opcode
             packet.set(bytesToSend, 1);
 
-            offset += sendLength;
+            offsetSoFar += sendLength;
             crcSoFar = crc32(bytesToSend, crcSoFar);
             prnCount += 1;
 
@@ -272,7 +276,8 @@ console.log('PRN hit, expecting CRC');
                         if (offsetSoFar === offset && crcSoFar === crc) {
                             return;
                         } else {
-                            return Promise.reject();
+//                             return Promise.reject(`CRC mismatch during PRN at byte ${offset}/${offsetSoFar}, expected 0x${crcSoFar.toString(16)} but got 0x${crc.toString(16)} instead`);
+                            console.warn(`CRC mismatch during PRN at byte ${offset}/${offsetSoFar}, expected 0x${crcSoFar.toString(16)} but got 0x${crc.toString(16)} instead`);
                         }
                     });
                 } else {
@@ -283,9 +288,9 @@ console.log('PRN hit, expecting CRC');
             .then(()=>{
                 if (sendLength !== bytes.length) {
                     // Send more stuff
-                    return this._writeObjectPiece(bytes.subarray(sendLength, crcSoFar, offset, prnCount));
+                    return this._writeObjectPiece(bytes.subarray(sendLength), crcSoFar, offsetSoFar, prnCount);
                 } else {
-                    return [offset, crcSoFar];
+                    return [offsetSoFar, crcSoFar];
                 }
             })
         });

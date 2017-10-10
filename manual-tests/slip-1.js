@@ -35,9 +35,9 @@ SerialPort.list().then((ports)=>{
 
 }).then((port)=>{
 
-    let serialTransport = new nrfDfu.DfuTransportSerial(port);
+    let serialTransport = new nrfDfu.DfuTransportSerial(port, 1);
 
-    let dfu = new nrfDfu.DfuOperation(basicUpdates, serialTransport, 2);
+    let dfu = new nrfDfu.DfuOperation(basicUpdates, serialTransport);
 
     dfu.start();
 
