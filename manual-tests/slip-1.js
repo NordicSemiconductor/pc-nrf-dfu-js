@@ -39,7 +39,14 @@ SerialPort.list().then((ports)=>{
 
     let dfu = new nrfDfu.DfuOperation(basicUpdates, serialTransport);
 
-    dfu.start();
+    dfu.start()
+    .then(()=>{
+        console.log('Seems like the DFU completed successfully!!')
+    })
+    .catch((err)=>{
+        console.error('DFU failed. Reason:');
+        console.error(err);
+    });
 
 
 

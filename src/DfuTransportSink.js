@@ -24,7 +24,7 @@ export default class DfuTransportSink extends DfuAbstractTransport {
         this._chunkSize = chunkSize;
 
         this._offsets = {1: 0, 2: 0};
-        this._crcs = {1: 0, 2: 0};
+        this._crcs = {1: undefined, 2: undefined};
         this._sizes = {1: 0, 2: 0};
 
         this._selected = undefined;

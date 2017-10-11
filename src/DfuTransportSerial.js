@@ -71,10 +71,16 @@ export default class DfuTransportSerial extends DfuAbstractTransport {
             return Promise.resolve(packet);
         }
 
-        /// TODO: Add some kind of timeout here.
-        return new Promise((res)=>{
-            this._waitingForPacket = res;
-        });
+        /// Store the callback so it can be called as soon as a SLIP packet is
+        /// decoded. Add a 5sec timeout while we're at it.
+        return Promise.race([
+            new Promise((res)=>{
+                this._waitingForPacket = res;
+            }),
+            new Promise((res, rej)=>{
+                setTimeout(()=>rej('Timeout while reading from serial port. Is the nRF in bootloader mode?'), 5000);
+            })
+        ]);
     }
 
     // Called when decoded data is received. Either stores the packet

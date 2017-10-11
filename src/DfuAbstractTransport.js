@@ -45,7 +45,7 @@ export default class DfuAbstractTransport {
 //                 throw new Error('Could not create payload with offset zero');
 //             }
 
-            return this._sendPayloadChunk(type, bytes, 0, chunkSize, 0);
+            return this._sendPayloadChunk(type, bytes, 0, chunkSize);
         });
     }
 
@@ -56,7 +56,7 @@ export default class DfuAbstractTransport {
     // - Writing the payload chunk (wire implementation might perform fragmentation)
     // - Check CRC32 and offset of payload so far
     // - Execute the payload chunk (target might write a flash page)
-    _sendPayloadChunk(type, bytes, start, chunkSize, crcSoFar) {
+    _sendPayloadChunk(type, bytes, start, chunkSize, crcSoFar = undefined) {
         if (start >= bytes.length) {
             return Promise.resolve();
         }
@@ -77,12 +77,12 @@ export default class DfuAbstractTransport {
                 throw new Error(`Expected ${end} bytes to have been sent, actual is ${offset} bytes.`);
             }
 
-//             if (crcAtChunkEnd !== crc) {
-//                 throw new Error(`CRC mismatch after ${end} bytes have been sent: expected ${crcAtChunkEnd}, got ${crc}.`);
-//             }
+            if (crcAtChunkEnd !== crc) {
+                throw new Error(`CRC mismatch after ${end} bytes have been sent: expected ${crcAtChunkEnd}, got ${crc}.`);
+            }
         })
         .then(()=>{
-            this._executeObject();
+            return this._executeObject();
         })
         .then(()=>{
             return this._sendPayloadChunk(type, bytes, end, chunkSize, crcAtChunkEnd);
