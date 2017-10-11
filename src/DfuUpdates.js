@@ -56,7 +56,7 @@ export default class DfuUpdates {
         return new Promise((res, rej)=>{
             fs.readFile(path, (err, data) => {
                 if (err) { return rej(err); }
-                return res((new JSZip()).loadAsync(data));
+                return res(this.fromZipFile(data));
             });
         });
     }    

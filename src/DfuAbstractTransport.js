@@ -67,7 +67,7 @@ export default class DfuAbstractTransport {
 
         return this._createObject(type, end - start)
         .then(()=>{
-            return this._writeObject(subarray, crcSoFar);
+            return this._writeObject(subarray, crcSoFar, start);
         })
         .then(()=>{
             return this._crcObject(end, crcAtChunkEnd);
@@ -103,11 +103,14 @@ export default class DfuAbstractTransport {
     _createObject(type, size) {}
 
     // Fill the space previously allocated with _createObject with the given bytes.
-    // Also receives the CRC32 so far, as some wire implementations perform extra CRC32 checks
-    // as the fragmented data is being checksummed.
+    // Also receives the absolute offset and CRC32 so far, as some wire
+    // implementations perform extra CRC32 checks as the fragmented data is being
+    // checksummed (and the return value for those checks involves both the absolute
+    // offset and the CRC32 value). Note that the CRC and offset are not part of the
+    // SDK implementation.
     // Must return a Promise to an array of [offset, crc]
     // Actual implementation must be provided by concrete subclasses of DfuAbstractTransport.
-    _writeObject(bytes, crcSoFar) {}
+    _writeObject(bytes, crcSoFar, offsetSoFar) {}
 
     // Trigger a CRC calculation of the data sent so far.
     // Must return a Promise to an array of [offset, crc]

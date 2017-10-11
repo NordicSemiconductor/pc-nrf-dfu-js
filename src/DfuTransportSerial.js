@@ -52,7 +52,8 @@ export default class DfuTransportSerial extends DfuAbstractTransport {
         encoded = new Buffer(encoded);
 
         return new Promise((res, rej)=>{
-            console.log('Sending packet: ', bytes, ' encoded as ', encoded);
+//             console.log('Sending packet: ', bytes, ' encoded as ', encoded);
+            console.log('Sending packet encoded as ', encoded);
             this._port.write(encoded, res);
         });
     }
@@ -117,7 +118,7 @@ export default class DfuTransportSerial extends DfuAbstractTransport {
                 });
             //         this._port.on('data', (data)=>this._slipDecoder.decode(data));
                 this._port.on('data', (data)=>{
-                    console.log('Received raw data: ', data);
+// console.log('Received raw data: ', data);
                     return this._slipDecoder.decode(data);
                 });
 
@@ -137,8 +138,8 @@ export default class DfuTransportSerial extends DfuAbstractTransport {
                 // Set PRN
                 .then(()=>this._write(new Uint8Array([
                     0x02,  // "Set PRN" opcode
-                    this._prn & 0x00FF, // PRN LSB
-                    this._prn & 0xFF00, // PRN MSB
+                    this._prn >> 0 & 0xFF, // PRN LSB
+                    this._prn >> 8 & 0xFF, // PRN MSB
                 ])))
                 .then(this._read.bind(this))
                 .then(this._assertPacket(0x02, 0))
@@ -169,7 +170,7 @@ console.log(`Wire MTU: ${mtu}; un-encoded data max size: ${this._mtu}`);
     // then returns an array of the form [opcode, payload] if the
     // operation was sucessful.
     _parse(bytes) {
-
+console.log('Received SLIP packet: ', bytes);
         if (bytes[0] !== 0x60) {
             return Promise.reject('SLIP response from devkit did not start with 0x60');
         }
@@ -226,10 +227,10 @@ console.log(`CreateObject type ${type}, size ${size}`);
             return this._write(new Uint8Array([
                 0x01,   // "Create object" opcode
                 type,
-                size & 0x000000FF,
-                size & 0x0000FF00,
-                size & 0x00FF0000,
-                size & 0xFF000000
+                size >> 0  & 0xFF,
+                size >> 8  & 0xFF,
+                size >> 16 & 0xFF,
+                size >> 24 & 0xFF
             ]))
             .then(this._read.bind(this))
             .then(this._assertPacket(0x01, 0));
@@ -238,21 +239,21 @@ console.log(`CreateObject type ${type}, size ${size}`);
         });
     }
 
-    _writeObject(bytes, crcSoFar, retriesLeft = 5) {
+    _writeObject(bytes, crcSoFar, offsetSoFar) {
 console.log('WriteObject');
         return this._ready().then(()=>{
-            return this._writeObjectPiece(bytes, crcSoFar, 0, 0)
+            return this._writeObjectPiece(bytes, crcSoFar, offsetSoFar, 0);
         })
-//         .catch((err)=>{
-//             console.warn('Caught: ', err, '; retrying chunk');
-//
-//             /// Handle failed PRN CRC checks by retrying up to 5 times
-//             if (retriesLeft > 0) {
-//                 return this._writeObject(bytes, crcSoFar, retriesLeft - 1);
-//             } else {
-//                 return Promise.reject('Too many transport failures while sending data');
-//             }
-//         });
+// //         .catch((err)=>{
+// //             console.warn('Caught: ', err, '; retrying chunk');
+// //
+// //             /// Handle failed PRN CRC checks by retrying up to 5 times
+// //             if (retriesLeft > 0) {
+// //                 return this._writeObject(bytes, crcSoFar, retriesLeft - 1);
+// //             } else {
+// //                 return Promise.reject('Too many transport failures while sending data');
+// //             }
+// //         });
     }
 
     // Sends *one* write operation (with up to this._mtu bytes of un-encoded data)
@@ -260,8 +261,7 @@ console.log('WriteObject');
     _writeObjectPiece(bytes, crcSoFar, offsetSoFar, prnCount) {
         return this._ready().then(()=>{
 
-            //const sendLength = Math.min(this._mtu - 1, bytes.length);
-            const sendLength = 1;   /// DEBUG!!
+            const sendLength = Math.min(this._mtu - 1, bytes.length);
 
             const bytesToSend = bytes.subarray(0, sendLength);
             const packet = new Uint8Array(sendLength + 1);
@@ -282,8 +282,8 @@ console.log('PRN hit, expecting CRC');
                         if (offsetSoFar === offset && crcSoFar === crc) {
                             return;
                         } else {
-//                             return Promise.reject(`CRC mismatch during PRN at byte ${offset}/${offsetSoFar}, expected 0x${crcSoFar.toString(16)} but got 0x${crc.toString(16)} instead`);
-                            console.warn(`CRC mismatch during PRN at byte ${offset}/${offsetSoFar}, expected 0x${crcSoFar.toString(16)} but got 0x${crc.toString(16)} instead`);
+                            return Promise.reject(`CRC mismatch during PRN at byte ${offset}/${offsetSoFar}, expected 0x${crcSoFar.toString(16)} but got 0x${crc.toString(16)} instead`);
+//                             console.warn(`CRC mismatch during PRN at byte ${offset}/${offsetSoFar}, expected 0x${crcSoFar.toString(16)} but got 0x${crc.toString(16)} instead`);
                         }
                     });
                 } else {
@@ -292,7 +292,7 @@ console.log('PRN hit, expecting CRC');
                 }
             })
             .then(()=>{
-                if (sendLength !== bytes.length) {
+                if (sendLength < bytes.length) {
                     // Send more stuff
                     return this._writeObjectPiece(bytes.subarray(sendLength), crcSoFar, offsetSoFar, prnCount);
                 } else {
@@ -331,6 +331,7 @@ console.log('Request CRC');
     }
 
     _executeObject() {
+console.log('Execute (mark payload chunk as ready)')
         return this._ready().then(()=>{
             return this._write(new Uint8Array([
                 0x04   // "Execute" opcode
