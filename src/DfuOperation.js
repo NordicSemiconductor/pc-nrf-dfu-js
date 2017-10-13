@@ -38,17 +38,22 @@ export default class DfuOperation {
      * the DFU has been performed (as in "everything has been sent to the
      * transport, and the CRCs back seem correct").
      *
+     * If called with a truthy value for the 'forceful' parameter, then
+     * the DFU procedure will skip the steps that detect whether a previous
+     * DFU procedure has been interrupted and can be continued. In other
+     * words, the DFU procedure will be started from the beginning, regardless.
+     *
      * Calling start() more than once has no effect, and will only return a
-     * reference to the same Promise.
+     * reference to the first Promise that was returned.
      */
-    start() {
+    start(forceful = false) {
         if (this._finishPromise) { return this._finishPromise; }
 
-        return this._finishPromise = this._start();
+        return this._finishPromise = this._start(forceful);
     }
 
-    _start() {
-        return this._performNextUpdate(0);
+    _start(forceful) {
+        return this._performNextUpdate(0, forceful);
     }
 
     // Takes in an update from this._update, performs it. Returns a Promise
@@ -56,17 +61,27 @@ export default class DfuOperation {
     // - Tell the transport to send the init packet
     // - Tell the transport to send the binary blob
     // - Proceed to the next update
-    _performNextUpdate(updateNumber) {
+    _performNextUpdate(updateNumber, forceful) {
         if (this._updates.length <= updateNumber) {
             return Promise.resolve();
         }
 
-        return this._transport.sendInitPacket(this._updates[updateNumber].initPacket)
+        let start;
+        if (forceful) {
+            start = this._transport.restart();
+        } else {
+            start = Promise.resolve();
+        }
+
+        return start
+        .then(()=>{
+            return this._transport.sendInitPacket(this._updates[updateNumber].initPacket)
+        })
         .then(()=>{
             return this._transport.sendFirmwareImage(this._updates[updateNumber].firmwareImage)
         })
         .then(()=>{
-            this._performNextUpdate(updateNumber+1);
+            this._performNextUpdate(updateNumber+1, forceful);
         });
     }
 

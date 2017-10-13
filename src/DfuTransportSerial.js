@@ -53,7 +53,7 @@ export default class DfuTransportSerial extends DfuAbstractTransport {
 
         return new Promise((res, rej)=>{
 //             console.log('Sending packet: ', bytes, ' encoded as ', encoded);
-            console.log('Sending packet encoded as ', encoded);
+            console.log(' send --> ', encoded);
             this._port.write(encoded, res);
         });
     }
@@ -118,29 +118,33 @@ export default class DfuTransportSerial extends DfuAbstractTransport {
                 });
             //         this._port.on('data', (data)=>this._slipDecoder.decode(data));
                 this._port.on('data', (data)=>{
-// console.log('Received raw data: ', data);
+console.log(' recv <-- ', data);
+//                     return this._slipDecoder.decode.bind(this._slipDecoder)(data);
                     return this._slipDecoder.decode(data);
                 });
 
+//                 this._port.on('data', this._slipDecoder.decode.bind(this._slipDecoder));
+
 
                 // Ping
-                let result = this._write(new Uint8Array([
-                    0x09,   // "Ping" opcode
-                    0xAB    // Ping ID
-                ]))
-                .then(this._read.bind(this))
-                .then(this._assertPacket(0x09, 1))
-                .then((bytes)=>{
-                    if (bytes[0] !== 0xAB) {
-                        throw new Error('Expected a ping ID of 0xAB, got ' + bytes + ' instead');
-                    }
-                })
+//                 let result = this._write(new Uint8Array([
+//                     0x09,   // "Ping" opcode
+//                     0xAB    // Ping ID
+//                 ]))
+//                 .then(this._read.bind(this))
+//                 .then(this._assertPacket(0x09, 1))
+//                 .then((bytes)=>{
+//                     if (bytes[0] !== 0xAB) {
+//                         throw new Error('Expected a ping ID of 0xAB, got ' + bytes + ' instead');
+//                     }
+//                 })
+
                 // Set PRN
-                .then(()=>this._write(new Uint8Array([
+                let result = this._write(new Uint8Array([
                     0x02,  // "Set PRN" opcode
                     this._prn >> 0 & 0xFF, // PRN LSB
                     this._prn >> 8 & 0xFF, // PRN MSB
-                ])))
+                ]))
                 .then(this._read.bind(this))
                 .then(this._assertPacket(0x02, 0))
                 // Request MTU
@@ -170,7 +174,7 @@ console.log(`Wire MTU: ${mtu}; un-encoded data max size: ${this._mtu}`);
     // then returns an array of the form [opcode, payload] if the
     // operation was sucessful.
     _parse(bytes) {
-console.log('Received SLIP packet: ', bytes);
+// console.log('Received SLIP packet: ', bytes);
         if (bytes[0] !== 0x60) {
             return Promise.reject('SLIP response from devkit did not start with 0x60');
         }
@@ -180,23 +184,22 @@ console.log('Received SLIP packet: ', bytes);
 console.log('Parsed SLIP packet: ', [opcode, bytes.subarray(3)]);
             return Promise.resolve([opcode, bytes.subarray(3)]);
         } else if (resultCode === 0x00) {
-            return Promise.reject('Received SLIP error: Missing or malformed opcode');
+            return Promise.reject('Received error from serial DFU target: Missing or malformed opcode');
         } else if (resultCode === 0x02) {
             return this._read();
-//             return Promise.reject('Received SLIP error: Invalid opcode');
-            return Promise.reject('Received SLIP error: Invalid opcode');
+            return Promise.reject('Received error from serial DFU target: Invalid opcode');
         } else if (resultCode === 0x03) {
-            return Promise.reject('Received SLIP error: A parameter for the opcode was missing');
+            return Promise.reject('Received error from serial DFU target: A parameter for the opcode was missing, or unsupported opcode');
         } else if (resultCode === 0x04) {
-            return Promise.reject('Received SLIP error: Not enough memory for the data object');
+            return Promise.reject('Received error from serial DFU target: Not enough memory for the data object');
         } else if (resultCode === 0x05) {
-            return Promise.reject('Received SLIP error: The data object didn\'t match firmware/hardware, or missing crypto signature, or command parse failed');
+            return Promise.reject('Received error from serial DFU target: The data object didn\'t match firmware/hardware, or missing crypto signature, or command parse failed');
         } else if (resultCode === 0x07) {
-            return Promise.reject('Received SLIP error: Unsupported object type for create/read operation');
+            return Promise.reject('Received error from serial DFU target: Unsupported object type for create/read operation');
         } else if (resultCode === 0x08) {
-            return Promise.reject('Received SLIP error: Cannot allow this operation in the current DFU state');
+            return Promise.reject('Received error from serial DFU target: Cannot allow this operation in the current DFU state');
         } else if (resultCode === 0x0A) {
-            return Promise.reject('Received SLIP error: Operation failed');
+            return Promise.reject('Received error from serial DFU target: Operation failed');
         } else {
             return Promise.reject('Received unknown result code from SLIP: ' + resultCode);
         }
@@ -262,6 +265,7 @@ console.log('WriteObject');
         return this._ready().then(()=>{
 
             const sendLength = Math.min(this._mtu - 1, bytes.length);
+//             const sendLength = 1; // DEBUG
 
             const bytesToSend = bytes.subarray(0, sendLength);
             const packet = new Uint8Array(sendLength + 1);
@@ -280,6 +284,7 @@ console.log('PRN hit, expecting CRC');
                     prnCount = 0;
                     return this._readCrc().then(([offset, crc])=>{
                         if (offsetSoFar === offset && crcSoFar === crc) {
+                            console.log(`PRN checksum OK at offset ${offset} (0x${crc.toString(16)})`);
                             return;
                         } else {
                             return Promise.reject(`CRC mismatch during PRN at byte ${offset}/${offsetSoFar}, expected 0x${crcSoFar.toString(16)} but got 0x${crc.toString(16)} instead`);
@@ -291,6 +296,7 @@ console.log('PRN hit, expecting CRC');
                     return;
                 }
             })
+//             .then(()=>new Promise(res=>{setTimeout(res, 100);}))    // Synthetic timeout for debugging
             .then(()=>{
                 if (sendLength < bytes.length) {
                     // Send more stuff
@@ -312,7 +318,7 @@ console.log('PRN hit, expecting CRC');
                 const bytesView = new DataView( bytes.buffer );
                 const offset    = bytesView.getUint32(bytes.byteOffset + 0, true);
                 const crc       = bytesView.getUint32(bytes.byteOffset + 4, true);
-console.log(`read checksum: `, bytes, [offset, crc])
+// console.log(`read checksum: `, bytes, [offset, crc])
 
                 return [offset, crc];
             });
@@ -342,6 +348,8 @@ console.log('Execute (mark payload chunk as ready)')
     }
 
     _selectObject(type) {
+console.log('Select (report max size and current offset/crc)');
+
         return this._ready().then(()=>{
             return this._write(new Uint8Array([
                 0x06,   // "Select object" opcode
@@ -356,7 +364,7 @@ console.log('Execute (mark payload chunk as ready)')
                 const chunkSize = bytesView.getUint32(bytes.byteOffset + 0, true);
                 const offset    = bytesView.getUint32(bytes.byteOffset + 4, true);
                 const crc       = bytesView.getUint32(bytes.byteOffset + 8, true);
-console.log(`select ${type}: `, bytes, [offset, crc, chunkSize])
+console.log(`select ${type}: offset ${offset}, crc ${crc}, max size ${chunkSize}`);
                 return [offset, crc, chunkSize];
             });
 

@@ -24,6 +24,16 @@ export default class DfuAbstractTransport {
         }
     }
 
+    // Restarts the DFU procedure by sending a create command of
+    // type 1 (init payload / "command object").
+    // By default, CRC checks are done in order to continue an interrupted
+    // transfer. Calling this before a sendInitPacket() will forcefully
+    // re-send everything.
+    restart() {
+        console.log('Forcefully restarting DFU procedure');
+        return this._createObject(1, 0x10);
+    }
+
     // Given a Uint8Array, sends it as an init payload / "command object".
     // Returns a Promise.
     sendInitPacket(bytes) {
@@ -39,36 +49,83 @@ export default class DfuAbstractTransport {
 
     // Sends either a init payload ("init packet"/"command object") or a data payload
     // ("firmware image"/"data objects")
-    _sendPayload(type, bytes) {
-        return this._selectObject(type).then(([offset, undefined, chunkSize])=>{
-//             if (offset !== 0) {
-//                 throw new Error('Could not create payload with offset zero');
-//             }
+    _sendPayload(type, bytes, resumeAtChunkBoundary = false) {
+        console.log(`Sending payload of type ${type}`);
+        return this._selectObject(type).then(([offset, crcSoFar, chunkSize])=>{
 
-            return this._sendPayloadChunk(type, bytes, 0, chunkSize);
+            if (offset !== 0) {
+                console.log(`Offset is not zero (${offset}). Checking if graceful continuation is possible.`)
+                const crc = crc32(bytes.subarray(0, offset));
+
+                if (crc === crcSoFar) {
+                    console.log('CRC match');
+                    if (offset === bytes.length) {
+                        console.log('Payload already transferred sucessfully, nothing to do here.');
+                        return Promise.resolve();
+                    } else if ((offset % chunkSize) === 0 && !resumeAtChunkBoundary) {
+                        // Edge case: when an exact multiple of the chunk size has
+                        // been transferred, the host side cannot be sure if the last
+                        // chunk has been marked as ready ("executed") or not.
+                        // The workaround is to re-create the current chunk, at
+                        // the risk of losing up to one chunk's worth of data.
+                        // The alternative (mark the chunk as ready) might instead
+                        // mark an empty chunk as ready.
+
+                        if (offset + chunkSize > bytes.length) {
+                            // Edgier case: only the last page is left. In this case,
+                            // the create command cannot be sent, because we lack information
+                            // about the size of the data object we want to create - is it
+                            // a full page/chunk, or is the remainder?
+                            return Promise.reject('A previous DFU process was interrupted, and it was left in such a state that cannot be continued. Please perform a DFU procedure disabling continuation.');
+                        }
+
+                        console.log('Edge case: payload transferred up to page boundary, possibly rolling back one whole page.');
+
+                        return this._createObject(type, chunkSize)
+                        .then(()=>this._sendPayload(type, bytes, true));
+
+                    } else {
+                        console.log(`Payload partially transferred sucessfully, continuing from offset ${offset}.`);
+
+                        // Send the remainder of a half-finished chunk
+                        const end = offset - (offset % chunkSize) + chunkSize;
+
+                        return this._sendPayloadChunk(type, bytes, offset, end, chunkSize, crc);
+                    }
+                } else {
+                    // Note that these are CRC mismatches at a chunk level, not at a
+                    // transport level. Individual transports might decide to roll back
+                    // parts of a chunk (re-creating it) on PRN CRC failures.
+                    // But here it means that there is a CRC mismatch while trying to
+                    // continue an interrupted DFU, and the behaviour in this case is to panic.
+                    console.log(`CRC mismatch: expected/actual 0x${crc.toString(16)}/0x${crcSoFar.toString(16)}`);
+
+                    return Promise.reject('A previous DFU process was interrupted, and it was left in such a state that cannot be continued. Please perform a DFU procedure disabling continuation.');
+                }
+
+            } else {
+                const end = Math.min(bytes.length, chunkSize);
+                return this._createObject(type, end)
+                .then(()=>{
+                    return this._sendPayloadChunk(type, bytes, 0, end, chunkSize);
+                });
+            }
         });
     }
 
 
     // Sends *one* chunk.
     // Sending a chunk involves:
-    // - Creating a payload chunk
+    // - (Creating a payload chunk) (this is done *before* sending the current chunk)
     // - Writing the payload chunk (wire implementation might perform fragmentation)
     // - Check CRC32 and offset of payload so far
     // - Execute the payload chunk (target might write a flash page)
-    _sendPayloadChunk(type, bytes, start, chunkSize, crcSoFar = undefined) {
-        if (start >= bytes.length) {
-            return Promise.resolve();
-        }
+    _sendPayloadChunk(type, bytes, start, end, chunkSize, crcSoFar = undefined) {
 
-        const end = Math.min(bytes.length, start + chunkSize);
         const subarray = bytes.subarray(start, end);
         const crcAtChunkEnd = crc32(subarray, crcSoFar);
 
-        return this._createObject(type, end - start)
-        .then(()=>{
-            return this._writeObject(subarray, crcSoFar, start);
-        })
+        return this._writeObject(subarray, crcSoFar, start)
         .then(()=>{
             return this._crcObject(end, crcAtChunkEnd);
         })
@@ -79,13 +136,28 @@ export default class DfuAbstractTransport {
 
             if (crcAtChunkEnd !== crc) {
                 throw new Error(`CRC mismatch after ${end} bytes have been sent: expected ${crcAtChunkEnd}, got ${crc}.`);
+            } else {
+                console.log(`Explicit checksum OK at ${end} bytes`);
             }
         })
+//         .then(()=>new Promise(res=>{setTimeout(res, 5100);}))    // Synthetic timeout for debugging
         .then(()=>{
             return this._executeObject();
         })
+//         .then(()=>new Promise(res=>{setTimeout(res, 5100);}))    // Synthetic timeout for debugging
         .then(()=>{
-            return this._sendPayloadChunk(type, bytes, end, chunkSize, crcAtChunkEnd);
+            if (end >= bytes.length) {
+                console.log(`Sent ${end} bytes, this payload type is finished`);
+                return Promise.resolve();
+            } else {
+                console.log(`Sent ${end} bytes, not finished yet (until ${bytes.length})`);
+                const nextEnd = Math.min(bytes.length, end + chunkSize);
+
+                return this._createObject(type, nextEnd - end)
+                .then(()=>{
+                    return this._sendPayloadChunk(type, bytes, end, nextEnd, chunkSize, crcAtChunkEnd);
+                });
+            }
         });
 
         /// TODO: Add retry logic for failed calls to this._writeObject (should re-create and re-write that same chunk)
