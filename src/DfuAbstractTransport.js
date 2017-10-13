@@ -90,7 +90,7 @@ export default class DfuAbstractTransport {
                         // Send the remainder of a half-finished chunk
                         const end = offset - (offset % chunkSize) + chunkSize;
 
-                        return this._sendPayloadChunk(type, bytes, offset, end, chunkSize, crc);
+                        return this._sendAndExecutePayloadChunk(type, bytes, offset, end, chunkSize, crc);
                     }
                 } else {
                     // Note that these are CRC mismatches at a chunk level, not at a
@@ -107,7 +107,7 @@ export default class DfuAbstractTransport {
                 const end = Math.min(bytes.length, chunkSize);
                 return this._createObject(type, end)
                 .then(()=>{
-                    return this._sendPayloadChunk(type, bytes, 0, end, chunkSize);
+                    return this._sendAndExecutePayloadChunk(type, bytes, 0, end, chunkSize);
                 });
             }
         });
@@ -120,7 +120,39 @@ export default class DfuAbstractTransport {
     // - Writing the payload chunk (wire implementation might perform fragmentation)
     // - Check CRC32 and offset of payload so far
     // - Execute the payload chunk (target might write a flash page)
-    _sendPayloadChunk(type, bytes, start, end, chunkSize, crcSoFar = undefined) {
+    _sendAndExecutePayloadChunk(type, bytes, start, end, chunkSize, crcSoFar = undefined) {
+
+        return this._sendPayloadChunk(type, bytes, start, end, chunkSize, crcSoFar)
+//         .then(()=>new Promise(res=>{setTimeout(res, 5100);}))    // Synthetic timeout for debugging
+        .then(()=>{
+            return this._executeObject();
+        })
+//         .then(()=>new Promise(res=>{setTimeout(res, 5100);}))    // Synthetic timeout for debugging
+        .then(()=>{
+            if (end >= bytes.length) {
+                console.log(`Sent ${end} bytes, this payload type is finished`);
+                return Promise.resolve();
+            } else {
+                // Send next chunk
+                console.log(`Sent ${end} bytes, not finished yet (until ${bytes.length})`);
+                const nextEnd = Math.min(bytes.length, end + chunkSize);
+
+                return this._createObject(type, nextEnd - end)
+                .then(()=>{
+                    return this._sendAndExecutePayloadChunk(type, bytes, end, nextEnd, chunkSize, crc32(bytes.subarray(0, end)));
+                });
+            }
+        });
+
+
+    }
+
+    // Sends one payload chunk, retrying if necessary.
+    // This is done without checksums nor sending the "execute" command. The reason
+    // for splitting this code apart is that retrying a chunk is easier when abstracting away
+    // the "execute" and "next chunk" logic
+    //
+    _sendPayloadChunk(type, bytes, start, end, chunkSize, crcSoFar = undefined, retries = 0) {
 
         const subarray = bytes.subarray(start, end);
         const crcAtChunkEnd = crc32(subarray, crcSoFar);
@@ -134,35 +166,33 @@ export default class DfuAbstractTransport {
                 throw new Error(`Expected ${end} bytes to have been sent, actual is ${offset} bytes.`);
             }
 
+//             if (Math.random() < 0.35) {
+//                 console.log('DEBUG: faking CRC check failure at chunk end');
+//                 throw new Error(`Faking CRC error at ${end} bytes.`);
+//             }
+
             if (crcAtChunkEnd !== crc) {
                 throw new Error(`CRC mismatch after ${end} bytes have been sent: expected ${crcAtChunkEnd}, got ${crc}.`);
             } else {
                 console.log(`Explicit checksum OK at ${end} bytes`);
             }
         })
-//         .then(()=>new Promise(res=>{setTimeout(res, 5100);}))    // Synthetic timeout for debugging
-        .then(()=>{
-            return this._executeObject();
-        })
-//         .then(()=>new Promise(res=>{setTimeout(res, 5100);}))    // Synthetic timeout for debugging
-        .then(()=>{
-            if (end >= bytes.length) {
-                console.log(`Sent ${end} bytes, this payload type is finished`);
-                return Promise.resolve();
-            } else {
-                console.log(`Sent ${end} bytes, not finished yet (until ${bytes.length})`);
-                const nextEnd = Math.min(bytes.length, end + chunkSize);
+        .catch((err)=>{
 
-                return this._createObject(type, nextEnd - end)
-                .then(()=>{
-                    return this._sendPayloadChunk(type, bytes, end, nextEnd, chunkSize, crcAtChunkEnd);
-                });
+            if (retries >= 5) {
+                return Promise.reject(`Too many write failures. Last failure: ${err}`);
             }
-        });
+            console.log(`Chunk write failed (${err}) Re-sending the whole chunk starting at ${start}. Times retried: ${retries}`);
 
-        /// TODO: Add retry logic for failed calls to this._writeObject (should re-create and re-write that same chunk)
+            start = start - (start % chunkSize);
+            // Rewind to the start of the block
+            let rewoundCrc = start === 0 ? undefined : crc32(bytes.subarray(0, start));
 
+            return this._createObject(type, end - start)
+            .then(()=>this._sendPayloadChunk(type, bytes, start, end, chunkSize, rewoundCrc, retries + 1));
+        })
     }
+
 
 
     // The following 5 methods have a 1-to-1 mapping to the 5 DFU requests

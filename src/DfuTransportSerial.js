@@ -284,7 +284,7 @@ console.log('PRN hit, expecting CRC');
                     prnCount = 0;
                     return this._readCrc().then(([offset, crc])=>{
                         if (offsetSoFar === offset && crcSoFar === crc) {
-                            console.log(`PRN checksum OK at offset ${offset} (0x${crc.toString(16)})`);
+                            console.log(`PRN checksum OK at offset ${offset} (0x${offset.toString(16)}) (0x${crc.toString(16)})`);
                             return;
                         } else {
                             return Promise.reject(`CRC mismatch during PRN at byte ${offset}/${offsetSoFar}, expected 0x${crcSoFar.toString(16)} but got 0x${crc.toString(16)} instead`);
@@ -296,7 +296,7 @@ console.log('PRN hit, expecting CRC');
                     return;
                 }
             })
-//             .then(()=>new Promise(res=>{setTimeout(res, 100);}))    // Synthetic timeout for debugging
+            .then(()=>new Promise(res=>{setTimeout(res, 100);}))    // Synthetic timeout for debugging
             .then(()=>{
                 if (sendLength < bytes.length) {
                     // Send more stuff
@@ -319,6 +319,16 @@ console.log('PRN hit, expecting CRC');
                 const offset    = bytesView.getUint32(bytes.byteOffset + 0, true);
                 const crc       = bytesView.getUint32(bytes.byteOffset + 4, true);
 // console.log(`read checksum: `, bytes, [offset, crc])
+
+//                 // DEBUG: Once in every 11 CRC responses, apply a XOR to the CRC
+//                 // to make it look like something has failed.
+//
+//                 if ((this._crcFailCounter = (this._crcFailCounter || 0) + 1) >= 11) {
+//                 if (Math.random() < 0.15) {
+//                     console.log('DEBUG: mangling CRC response to make it look like a failure');
+//                     this._crcFailCounter = 0;
+//                     return [offset, Math.abs(crc - 0x1111)];
+//                 }
 
                 return [offset, crc];
             });
