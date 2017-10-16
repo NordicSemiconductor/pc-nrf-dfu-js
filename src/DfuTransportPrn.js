@@ -82,7 +82,7 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
                 this._waitingForPacket = res;
             }),
             new Promise((res, rej)=>{
-                setTimeout(()=>rej('Timeout while reading from serial port. Is the nRF in bootloader mode?'), 5000);
+                setTimeout(()=>rej('Timeout while reading from transport. Is the nRF in bootloader mode?'), 5000);
             })
         ]);
     }
@@ -285,12 +285,11 @@ console.log('Request CRC');
     _executeObject() {
 console.log('Execute (mark payload chunk as ready)')
         return this._ready().then(()=>{
-            return new Promise(res=>{setTimeout(res, 5000);})    // Synthetic timeout for debugging
-//             return this._writeCommand(new Uint8Array([
-            .then(()=>this._writeCommand(new Uint8Array([
+//             return new Promise(res=>{setTimeout(res, 5000);})    // Synthetic timeout for debugging
+            return this._writeCommand(new Uint8Array([
                 0x04   // "Execute" opcode
-            ])))
-            .then(()=>new Promise(res=>{setTimeout(res, 5000);}))    // Synthetic timeout for debugging
+            ]))
+//             .then(()=>new Promise(res=>{setTimeout(res, 5000);}))    // Synthetic timeout for debugging
             .then(this._read.bind(this))
             .then(this._assertPacket(0x04, 0));
         });

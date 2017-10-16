@@ -60,39 +60,29 @@ export default class DfuAbstractTransport {
                 if (crc === crcSoFar) {
                     console.log('CRC match');
                     if (offset === bytes.length) {
-                        console.log('Payload already transferred sucessfully, nothing to do here.');
-                        return Promise.resolve();
+                        console.log('Payload already transferred sucessfully, sending execute command just in case.');
+
+                        // Send an exec command, just in case the previous connection broke
+                        // just before the exec command. An extra exec command will have no
+                        // effect.
+                        return this._executeObject(type, chunkSize);
                     } else if ((offset % chunkSize) === 0 && !resumeAtChunkBoundary) {
                         // Edge case: when an exact multiple of the chunk size has
                         // been transferred, the host side cannot be sure if the last
                         // chunk has been marked as ready ("executed") or not.
-                        // The workaround is to re-create the current chunk, at
-                        // the risk of losing up to one chunk's worth of data.
-                        // The alternative (mark the chunk as ready) might instead
-                        // mark an empty chunk as ready.
+                        // Fortunately, if an "execute" command is sent right after
+                        // another "execute" command, the second one will do nothing
+                        // and yet receive an "OK" response code.
 
-                        if (offset + chunkSize > bytes.length) {
-                            // Edgier case: only the last page is left. In this case,
-                            // the create command cannot be sent, because we lack information
-                            // about the size of the data object we want to create - is it
-                            // a full page/chunk, or is the remainder?
-                            return Promise.reject('A previous DFU process was interrupted, and it was left in such a state that cannot be continued. Please perform a DFU procedure disabling continuation.');
-                        }
+                        console.log('Edge case: payload transferred up to page boundary; previous execute command might have been lost, re-sending.');
 
-                        console.log('Edge case: payload transferred up to page boundary, possibly rolling back one whole page.');
-
-                        // Try sending data, if it fails re-create the page
-                        // FIXME: What if there is a bona fide CRC error, or a lost packet.
-//                         return this._sendPayload(type, bytes, true)
-//                         .catch(()=>{
-//                             return this._createObject(type, chunkSize)
-//                             .then(()=>this._sendPayload(type, bytes, true))
-//                         });
+                        return this._executeObject(type, chunkSize)
+                        .then(()=>this._sendPayload(type, bytes, true));
 
                         // Recreate the page (possibly rolling back one page worth of data),
                         // restart the resume logic from a known state.
-                        return this._createObject(type, chunkSize)
-                        .then(()=>this._sendPayload(type, bytes, true));
+//                         return this._createObject(type, chunkSize)
+//                         .then(()=>this._sendPayload(type, bytes, true));
 
                     } else {
                         console.log(`Payload partially transferred sucessfully, continuing from offset ${offset}.`);
