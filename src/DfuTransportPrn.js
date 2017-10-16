@@ -82,7 +82,11 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
                 this._waitingForPacket = res;
             }),
             new Promise((res, rej)=>{
-                setTimeout(()=>rej('Timeout while reading from transport. Is the nRF in bootloader mode?'), 5000);
+                setTimeout(()=>{
+                    this._waitingForPacket();
+                    this._waitingForPacket = undefined;
+                    rej('Timeout while reading from transport. Is the nRF in bootloader mode?'), 5000);
+                }
             })
         ]);
     }
@@ -125,7 +129,7 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
         const opcode = bytes[1];
         const resultCode = bytes[2];
         if (resultCode === 0x01) {
-console.log('Parsed SLIP packet: ', [opcode, bytes.subarray(3)]);
+console.log('Parsed DFU response packet: ', [opcode, bytes.subarray(3)]);
             return Promise.resolve([opcode, bytes.subarray(3)]);
         } else if (resultCode === 0x00) {
             return Promise.reject('Received error from DFU target: Missing or malformed opcode');

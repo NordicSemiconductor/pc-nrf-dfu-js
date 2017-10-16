@@ -14,7 +14,8 @@ Promise.all([
 
         ports = ports.filter(port=>(
 //             (port.vendorId === '1366') || // Segger
-            (port.vendorId === '1915' && port.productId === '521F') // NordicSemi default USB SDFU
+            (port.vendorId === '1915' && port.productId === '521F') || // NordicSemi default USB SDFU, win
+            (port.vendorId === '1915' && port.productId === 'nRF52 USB SDFU') // NordicSemi default USB SDFU, linux
         ));
 
     //     console.log('serial ports: ', ports);
@@ -39,8 +40,8 @@ Promise.all([
 
     let dfu = new nrfDfu.DfuOperation(updates, serialTransport);
 
-//     dfu.start(true)
-    dfu.start()
+    dfu.start(true)
+//     dfu.start()
     .then(()=>{
         console.log('Seems like the DFU completed successfully!!')
     })

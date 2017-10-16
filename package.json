@@ -20,6 +20,7 @@
   },
   "devDependencies": {
     "jasmine": "^2.8.0",
+    "noble": "^1.8.1",
     "rollup": "^0.50.0",
     "rollup-plugin-commonjs": "^8.2.1",
     "rollup-plugin-node-builtins": "^2.1.2",
