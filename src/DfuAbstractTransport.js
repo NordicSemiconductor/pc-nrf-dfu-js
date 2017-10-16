@@ -81,6 +81,16 @@ export default class DfuAbstractTransport {
 
                         console.log('Edge case: payload transferred up to page boundary, possibly rolling back one whole page.');
 
+                        // Try sending data, if it fails re-create the page
+                        // FIXME: What if there is a bona fide CRC error, or a lost packet.
+//                         return this._sendPayload(type, bytes, true)
+//                         .catch(()=>{
+//                             return this._createObject(type, chunkSize)
+//                             .then(()=>this._sendPayload(type, bytes, true))
+//                         });
+
+                        // Recreate the page (possibly rolling back one page worth of data),
+                        // restart the resume logic from a known state.
                         return this._createObject(type, chunkSize)
                         .then(()=>this._sendPayload(type, bytes, true));
 
