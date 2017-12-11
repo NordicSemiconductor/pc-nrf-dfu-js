@@ -114,7 +114,14 @@ console.log(' recv <-- ', data);
                         bytes[0];
 
                     // Convert wire MTU into max size of SLIP-decoded data:
+                    // This takes into account:
+                    // - SLIP encoding ( /2 )
+                    // - SLIP end separator ( -1 )
+                    // - Serial DFU write command ( -1 )
                     this._mtu = Math.floor((mtu / 2) - 2);
+
+// this._mtu = Math.min(this._mtu, 20);
+
 console.log(`Wire MTU: ${mtu}; un-encoded data max size: ${this._mtu}`);
                 });
 

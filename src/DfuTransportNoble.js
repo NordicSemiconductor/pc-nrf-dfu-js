@@ -31,7 +31,7 @@ export default class DfuTransportNoble extends DfuTransportPrn {
         this._dfuPacketCharacteristic = undefined;
         
         // Hard-coded BLE MTU
-        this._mtu = 20;
+        this._mtu = 23;
     }
 
 
@@ -44,13 +44,22 @@ export default class DfuTransportNoble extends DfuTransportPrn {
 
         
         return new Promise((res, rej)=>{
-            this._dfuControlCharacteristic.write(bytes, false, (err)=>{
-                if (err) {
-                    rej(err);
-                } else {
-                    res();
-                }
-            });
+            setTimeout(()=>{
+
+//                 this._dfuControlCharacteristic.once('write', ()=> {
+//                     console.log(' wire --> ', bytes);
+//                     res();
+//                 })
+
+                this._dfuControlCharacteristic.write(bytes, false, (err)=>{
+                    if (err) {
+                        rej(err);
+                    } else {
+                        res();
+                    }
+                });
+                
+            }, 100);
         });
     }
 
@@ -63,13 +72,21 @@ export default class DfuTransportNoble extends DfuTransportPrn {
         console.log(' data --> ', bytes);
         
         return new Promise((res, rej)=>{
-            this._dfuPacketCharacteristic.write(bytes, true, (err)=>{
-                if (err) {
-                    rej(err);
-                } else {
-                    res();
-                }
-            });
+//             setTimeout(()=>{
+            
+//                 this._dfuPacketCharacteristic.once('write', ()=> {
+//                     console.log(' wire --> ', bytes);
+//                     res();
+//                 })
+            
+                this._dfuPacketCharacteristic.write(bytes, true, (err)=>{
+                    if (err) {
+                        rej(err);
+                    } else {
+                        res();
+                    }
+                });
+//             }, 50);
         });
     }
 
@@ -146,12 +163,14 @@ export default class DfuTransportNoble extends DfuTransportPrn {
 
         return this._readyPromise = Promise.race([
             this._getCharacteristics(),
-            new Promise((res, rej)=>{ setTimeout(()=>rej('Timeout while fetching characteristics from BLE peripheral'), 5000) })
+            new Promise((res, rej)=>{ setTimeout(()=>rej('Timeout while fetching characteristics from BLE peripheral'), 500) })
         ])
         .then(()=>{
             // Subscribe to notifications on the control characteristic
-            console.log('control characteristic:', this._dfuControlCharacteristic);
+            console.log('control characteristic:', this._dfuControlCharacteristic.uuid, this._dfuControlCharacteristic.properties);
+            
             return new Promise((res, rej)=>{
+                console.log('Subscribing to notifications on the ctrl characteristic');
                 this._dfuControlCharacteristic.subscribe((err)=>{
                     if (err) { 
                         return rej('Could not subscribe to changes of the control characteristics'); 

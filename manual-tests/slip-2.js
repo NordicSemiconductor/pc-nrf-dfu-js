@@ -31,12 +31,14 @@ Promise.all([
         }
 
     }),
-    nrfDfu.DfuUpdates.fromZipFilePath('./spec/test-data/ble_app_buttonless_dfu_with_bonds_s132.zip')
+//     nrfDfu.DfuUpdates.fromZipFilePath('./spec/test-data/ble_app_buttonless_dfu_with_bonds_s132.zip')
+    nrfDfu.DfuUpdates.fromZipFilePath('./spec/test-data/blinky_s140.zip')
 //     nrfDfu.DfuUpdates.fromZipFilePath('./spec/test-data/52840/dfu app update/keyboard_app_debug.zip')
 ])
 .then(([port, updates])=>{
 
-    let serialTransport = new nrfDfu.DfuTransportSerial(port, 8);
+    //                                                 port, PRN
+    let serialTransport = new nrfDfu.DfuTransportSerial(port, 0);
 
     let dfu = new nrfDfu.DfuOperation(updates, serialTransport);
 
@@ -50,7 +52,7 @@ Promise.all([
         console.error(err);
     })
     .then(()=>{
-        port.close()
+        port.close();
     });
 });
 

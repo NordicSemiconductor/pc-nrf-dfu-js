@@ -42,8 +42,9 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
         // Store *one* reference to a _read() callback function
         this._waitingForPacket;
 
-        // Maximum Transmission Unit. Its value **must** be filled in by the
-        // concrete subclasses before any data is sent.
+        // Maximum Transmission Unit. The maximum amount of bytes that can be sent to a
+        // _writeData() call. Its value **must** be filled in by the concrete subclasses 
+        // before any data is sent.
         this._mtu = undefined;
     }
 
@@ -83,10 +84,14 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
             }),
             new Promise((res, rej)=>{
                 setTimeout(()=>{
-                    this._waitingForPacket();
-                    this._waitingForPacket = undefined;
-                    rej('Timeout while reading from transport. Is the nRF in bootloader mode?'), 5000);
-                }
+                    if (this._waitingForPacket && this._waitingForPacket === res) {
+//                         this._waitingForPacket();
+                        delete this._waitingForPacket;
+//                     } else {
+//                         res();
+                    }
+                    rej('Timeout while reading from transport. Is the nRF in bootloader mode?')
+                }, 5000);
             })
         ]);
     }
@@ -159,7 +164,15 @@ console.log('Parsed DFU response packet: ', [opcode, bytes.subarray(3)]);
     // Returns a *function* that checks a [opcode, bytes] parameter against the given
     // opcode and byte length, and returns only the bytes.
     _assertPacket(expectedOpcode, expectedLength) {
-        return ([opcode, bytes])=>{
+        return (response)=>{
+            
+            if (!response) {
+                console.log('Tried to assert an empty parsed response!');
+                console.log('response: ', response);
+                throw new Error('Tried to assert an empty parsed response!');
+            }
+            const [opcode, bytes] = response;
+            
             if (opcode !== expectedOpcode) {
                 return Promise.reject(`Expected a response with opcode ${expectedOpcode}, got ${opcode} instead.`);
             }
@@ -204,7 +217,7 @@ console.log('WriteObject');
     _writeObjectPiece(bytes, crcSoFar, offsetSoFar, prnCount) {
         return this._ready().then(()=>{
 
-            const sendLength = Math.min(this._mtu - 1, bytes.length);
+            const sendLength = Math.min(this._mtu, bytes.length);
 //             const sendLength = 1; // DEBUG
 
             const bytesToSend = bytes.subarray(0, sendLength);
@@ -218,7 +231,7 @@ console.log('WriteObject');
 
             return this._writeData(bytesToSend)
             .then(()=>{
-                if (prnCount >= this._prn) {
+                if (this._prn > 0 && prnCount >= this._prn) {
 console.log('PRN hit, expecting CRC');
                     // Expect a CRC due to PRN
                     prnCount = 0;
