@@ -143,8 +143,6 @@ export default class DfuAbstractTransport {
                 });
             }
         });
-
-
     }
 
     // Sends one payload chunk, retrying if necessary.
@@ -183,7 +181,11 @@ export default class DfuAbstractTransport {
                 return Promise.reject(`Too many write failures. Last failure: ${err}`);
             }
             console.log(`Chunk write failed (${err}) Re-sending the whole chunk starting at ${start}. Times retried: ${retries}`);
+//             throw err;
 
+            /// FIXME: Instead of re-creating the whole chunk, select the payload
+            /// type again and check the CRC so far.
+            
             start = start - (start % chunkSize);
             // Rewind to the start of the block
             let rewoundCrc = start === 0 ? undefined : crc32(bytes.subarray(0, start));

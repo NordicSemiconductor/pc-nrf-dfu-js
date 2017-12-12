@@ -17,10 +17,7 @@ const updatesPromise = nrfDfu.DfuUpdates.fromZipFilePath('./spec/test-data/ble_a
 
 
 noble.on('discover', function(peripheral) {
-    console.log('Found device with local name: ' + peripheral.advertisement.localName);
-    console.log('address', peripheral.addressType, peripheral.address);
-    console.log('advertising the following service uuid\'s: ' + peripheral.advertisement.serviceUuids);
-    console.log('rssi', peripheral.rssi);
+    console.log(`Found device with local name: ${peripheral.advertisement.localName}, address ${peripheral.addressType} ${peripheral.address}, service UUIDS ${peripheral.advertisement.serviceUuids}, RSSI ${peripheral.rssi}`);
 //     console.log(peripheral);
 //     console.log('id', peripheral.id);
 //     console.log('uuid', peripheral.id);
@@ -36,7 +33,7 @@ noble.on('discover', function(peripheral) {
     if (peripheral.advertisement.localName === 'DfuTest'){
         noble.stopScanning();   // Stop scanning for more devices
         
-        let nobleTransport = new nrfDfu.DfuTransportNoble(peripheral, 2);
+        let nobleTransport = new nrfDfu.DfuTransportNoble(peripheral, 1);
         
 //         nobleTransport._ready().then(()=>{
 //             nobleTransport._writeCommand(new Uint8Array([0x06, 0x02]));
@@ -45,8 +42,6 @@ noble.on('discover', function(peripheral) {
 //                 console.log('Received: ', bytes);
 //             });
 //         });
-        
-        
         
         updatesPromise.then((updates)=>{
             let dfu = new nrfDfu.DfuOperation(updates, nobleTransport);

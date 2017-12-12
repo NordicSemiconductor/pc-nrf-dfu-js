@@ -113,8 +113,22 @@ console.log(' recv <-- ', data);
                         bytes[1] * 256 +
                         bytes[0];
 
-                    // Convert wire MTU into max size of SLIP-decoded data:
+                    // Convert wire MTU into max size of data before SLIP encoding:
+                    // This takes into account:
+                    // - SLIP encoding ( /2 )
+                    // - SLIP end separator ( -1 )
+                    // - Serial DFU write command ( -1 )
                     this._mtu = Math.floor((mtu / 2) - 2);
+
+                    // Round down to multiples of 4.
+                    // This is done to avoid errors while writing to flash memory:
+                    // writing an unaligned number of bytes will result in an
+                    // error in most chips.
+                    this._mtu -= this._mtu % 4;
+
+// DEBUG: Force a specific MTU.
+// this._mtu = Math.min(this._mtu, 133);
+
 console.log(`Wire MTU: ${mtu}; un-encoded data max size: ${this._mtu}`);
                 });
 
