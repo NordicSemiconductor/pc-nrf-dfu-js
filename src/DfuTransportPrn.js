@@ -85,10 +85,7 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
             new Promise((res, rej)=>{
                 setTimeout(()=>{
                     if (this._waitingForPacket && this._waitingForPacket === res) {
-//                         this._waitingForPacket();
                         delete this._waitingForPacket;
-//                     } else {
-//                         res();
                     }
                     rej('Timeout while reading from transport. Is the nRF in bootloader mode?')
                 }, 5000);
@@ -163,22 +160,23 @@ console.log('Parsed DFU response packet: ', [opcode, bytes.subarray(3)]);
 
     // Returns a *function* that checks a [opcode, bytes] parameter against the given
     // opcode and byte length, and returns only the bytes.
+    // If the opcode is different, or the payload length is different, an error is thrown.
     _assertPacket(expectedOpcode, expectedLength) {
         return (response)=>{
             
             if (!response) {
-                console.log('Tried to assert an empty parsed response!');
-                console.log('response: ', response);
+                console.error('Tried to assert an empty parsed response!');
+                console.error('response: ', response);
                 throw new Error('Tried to assert an empty parsed response!');
             }
             const [opcode, bytes] = response;
             
             if (opcode !== expectedOpcode) {
-                return Promise.reject(`Expected a response with opcode ${expectedOpcode}, got ${opcode} instead.`);
+                throw new Error(`Expected a response with opcode ${expectedOpcode}, got ${opcode} instead.`);
             }
 
             if (bytes.length !== expectedLength) {
-                return Promise.reject(`Expected ${expectedLength} in response to opcode ${expectedOpcode}, got ${bytes.length}.`);
+                throw new Error(`Expected ${expectedLength} bytes in response to opcode ${expectedOpcode}, got ${bytes.length} bytes instead.`);
             }
 
             return bytes;
