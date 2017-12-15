@@ -1,10 +1,8 @@
 
 import DfuAbstractTransport from './DfuAbstractTransport';
+const debug = require('debug')('dfu:prntransport');
 
 // FIXME: Should be `import {crc32} from 'crc'`, https://github.com/alexgorbatchev/node-crc/pull/50
-// import * as crc from 'crc';
-// const crc32 = crc.crc32;
-// import {crc32} from 'crc';
 import crc32 from 'crc/src/crc32';
 
 
@@ -131,7 +129,7 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
         const opcode = bytes[1];
         const resultCode = bytes[2];
         if (resultCode === 0x01) {
-console.log('Parsed DFU response packet: ', [opcode, bytes.subarray(3)]);
+            debug('Parsed DFU response packet: opcode ', opcode, ', payload: ', bytes.subarray(3));
             return Promise.resolve([opcode, bytes.subarray(3)]);
         } else if (resultCode === 0x00) {
             return Promise.reject('Received error from DFU target: Missing or malformed opcode');
@@ -165,8 +163,8 @@ console.log('Parsed DFU response packet: ', [opcode, bytes.subarray(3)]);
         return (response)=>{
             
             if (!response) {
-                console.error('Tried to assert an empty parsed response!');
-                console.error('response: ', response);
+                debug('Tried to assert an empty parsed response!');
+                debug('response: ', response);
                 throw new Error('Tried to assert an empty parsed response!');
             }
             const [opcode, bytes] = response;
@@ -185,7 +183,7 @@ console.log('Parsed DFU response packet: ', [opcode, bytes.subarray(3)]);
 
 
     _createObject(type, size) {
-console.log(`CreateObject type ${type}, size ${size}`);
+        debug(`CreateObject type ${type}, size ${size}`);
 
         return this._ready().then(()=>{
             return this._writeCommand(new Uint8Array([
@@ -199,12 +197,11 @@ console.log(`CreateObject type ${type}, size ${size}`);
             .then(this._read.bind(this))
             .then(this._assertPacket(0x01, 0));
 
-//             console.log('Should send select message');
         });
     }
 
     _writeObject(bytes, crcSoFar, offsetSoFar) {
-console.log('WriteObject');
+        debug('WriteObject');
         return this._ready().then(()=>{
             return this._writeObjectPiece(bytes, crcSoFar, offsetSoFar, 0);
         })
@@ -230,16 +227,15 @@ console.log('WriteObject');
             return this._writeData(bytesToSend)
             .then(()=>{
                 if (this._prn > 0 && prnCount >= this._prn) {
-console.log('PRN hit, expecting CRC');
+                    debug('PRN hit, expecting CRC');
                     // Expect a CRC due to PRN
                     prnCount = 0;
                     return this._readCrc().then(([offset, crc])=>{
                         if (offsetSoFar === offset && crcSoFar === crc) {
-                            console.log(`PRN checksum OK at offset ${offset} (0x${offset.toString(16)}) (0x${crc.toString(16)})`);
+                            debug(`PRN checksum OK at offset ${offset} (0x${offset.toString(16)}) (0x${crc.toString(16)})`);
                             return;
                         } else {
                             return Promise.reject(`CRC mismatch during PRN at byte ${offset}/${offsetSoFar}, expected 0x${crcSoFar.toString(16)} but got 0x${crc.toString(16)} instead`);
-//                             console.warn(`CRC mismatch during PRN at byte ${offset}/${offsetSoFar}, expected 0x${crcSoFar.toString(16)} but got 0x${crc.toString(16)} instead`);
                         }
                     });
                 } else {
@@ -269,14 +265,13 @@ console.log('PRN hit, expecting CRC');
                 const bytesView = new DataView( bytes.buffer );
                 const offset    = bytesView.getUint32(bytes.byteOffset + 0, true);
                 const crc       = bytesView.getUint32(bytes.byteOffset + 4, true);
-// console.log(`read checksum: `, bytes, [offset, crc])
 
 //                 // DEBUG: Once in every 11 CRC responses, apply a XOR to the CRC
 //                 // to make it look like something has failed.
 //
 //                 if ((this._crcFailCounter = (this._crcFailCounter || 0) + 1) >= 11) {
-//                 if (Math.random() < 0.15) {
-//                     console.log('DEBUG: mangling CRC response to make it look like a failure');
+// //                 if (Math.random() < 0.05) {
+//                     debug('DEBUG: mangling CRC response to make it look like a failure');
 //                     this._crcFailCounter = 0;
 //                     return [offset, Math.abs(crc - 0x1111)];
 //                 }
@@ -287,7 +282,7 @@ console.log('PRN hit, expecting CRC');
     }
 
     _crcObject() {
-console.log('Request CRC');
+        debug('Request CRC explicitly');
 
         return this._ready().then(()=>{
             return this._writeCommand(new Uint8Array([
@@ -298,7 +293,7 @@ console.log('Request CRC');
     }
 
     _executeObject() {
-console.log('Execute (mark payload chunk as ready)')
+        debug('Execute (mark payload chunk as ready)')
         return this._ready().then(()=>{
 //             return new Promise(res=>{setTimeout(res, 5000);})    // Synthetic timeout for debugging
             return this._writeCommand(new Uint8Array([
@@ -311,7 +306,7 @@ console.log('Execute (mark payload chunk as ready)')
     }
 
     _selectObject(type) {
-console.log('Select (report max size and current offset/crc)');
+        debug('Select (report max size and current offset/crc)');
 
         return this._ready().then(()=>{
             return this._writeCommand(new Uint8Array([
@@ -327,7 +322,7 @@ console.log('Select (report max size and current offset/crc)');
                 const chunkSize = bytesView.getUint32(bytes.byteOffset + 0, true);
                 const offset    = bytesView.getUint32(bytes.byteOffset + 4, true);
                 const crc       = bytesView.getUint32(bytes.byteOffset + 8, true);
-console.log(`select ${type}: offset ${offset}, crc ${crc}, max size ${chunkSize}`);
+                debug(`selected ${type}: offset ${offset}, crc ${crc}, max size ${chunkSize}`);
                 return [offset, crc, chunkSize];
             });
 

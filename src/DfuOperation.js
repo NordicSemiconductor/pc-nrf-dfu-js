@@ -1,6 +1,8 @@
 
 import ProgressCounter from './ProgressCounter';
 
+const debug = require('debug')('dfu:operation');
+
 
 /**
  * Represents a DFU Operation - the act of updating the firmware on a

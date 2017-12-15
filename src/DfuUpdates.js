@@ -2,6 +2,8 @@
 import * as JSZip from 'jszip';
 import fs from 'fs';
 
+const debug = require('debug')('dfu:updates');
+
 
 // Object.entries polyfill, as per 
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/entries
@@ -90,7 +92,7 @@ export default class DfuUpdates {
         return (new JSZip()).loadAsync(zipBytes).then((zippedFiles)=>{
             return zippedFiles.file('manifest.json').async('text').then((manifestString)=>{
 
-                console.log('Unzipped manifest: ', manifestString);
+                debug('Unzipped manifest: ', manifestString);
 
                 return JSON.parse(manifestString).manifest;
             }).then((manifestJson)=>{
@@ -101,7 +103,7 @@ export default class DfuUpdates {
                 // from creating more init packets (with more protobuf defs)
                 // and more types of payload. So we don't check for this.
 
-                console.log('Parsed manifest:', manifestJson);
+                debug('Parsed manifest:', manifestJson);
 
                 let updates = Object.entries(manifestJson).map(([, updateJson])=>{
                     const { dat_file, bin_file } = updateJson;

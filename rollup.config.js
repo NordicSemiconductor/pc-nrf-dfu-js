@@ -34,7 +34,7 @@ export default [
     // the `targets` option which can specify `dest` and `format`)
     {
         input: 'src/index.js',
-        external: ['buffer', 'fs', 'jszip'],
+        external: ['buffer', 'fs', 'jszip', 'debug'],
         output: [
             { file: pkg.main, format: 'cjs', sourcemap: true },
             { file: pkg.module, format: 'es', sourcemap: true }

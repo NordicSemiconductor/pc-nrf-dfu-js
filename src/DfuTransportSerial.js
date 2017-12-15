@@ -1,14 +1,10 @@
 
+import * as slip from 'slip';
+
+const debug = require('debug')('dfu:serial');
+
 import DfuTransportPrn from './DfuTransportPrn';
 
-// FIXME: Should be `import {crc32} from 'crc'`, https://github.com/alexgorbatchev/node-crc/pull/50
-// import * as crc from 'crc';
-// const crc32 = crc.crc32;
-// import {crc32} from 'crc';
-// import crc32 from 'crc/src/crc32';
-
-
-import * as slip from 'slip';
 
 /**
  * Serial DFU transport.
@@ -37,7 +33,7 @@ export default class DfuTransportSerial extends DfuTransportPrn {
         encoded = new Buffer(encoded);
 
         return new Promise((res, rej)=>{
-            console.log(' send --> ', encoded);
+            debug(' send --> ', encoded);
             this._port.write(encoded, res);
         });
     }
@@ -60,7 +56,10 @@ export default class DfuTransportSerial extends DfuTransportPrn {
         }
 
         return this._readyPromise = new Promise((res)=>{
+            debug(`Opening serial port.`);
+
             this._port.open(()=>{
+                debug(`Initializing DFU protocol (PRN and MTU).`);
 
                 // Start listening for data, and pipe it all through a SLIP decoder.
                 // This code will listen to events from the SLIP decoder instead
@@ -71,7 +70,7 @@ export default class DfuTransportSerial extends DfuTransportPrn {
 //                 this._port.on('data', (data)=>this._slipDecoder.decode(data));
 
                 this._port.on('data', (data)=>{
-console.log(' recv <-- ', data);
+                    debug(' recv <-- ', data);
 //                     return this._slipDecoder.decode.bind(this._slipDecoder)(data);
                     return this._slipDecoder.decode(data);
                 });
@@ -107,7 +106,6 @@ console.log(' recv <-- ', data);
                 .then(this._read.bind(this))
                 .then(this._assertPacket(0x07, 2))
                 .then((bytes)=>{
-//                     console.log('Got MTU: ', bytes);
 
                     let mtu =
                         bytes[1] * 256 +
@@ -127,9 +125,9 @@ console.log(' recv <-- ', data);
                     this._mtu -= this._mtu % 4;
 
 // DEBUG: Force a specific MTU.
-// this._mtu = Math.min(this._mtu, 133);
+this._mtu = Math.min(this._mtu, 20);
 
-console.log(`Wire MTU: ${mtu}; un-encoded data max size: ${this._mtu}`);
+                    debug(`Serial wire MTU: ${mtu}; un-encoded data max size: ${this._mtu}`);
                 });
 
                 return res(result);

@@ -19,6 +19,7 @@
     "slip": "https://github.com/IvanSanchez/slip.js.git"
   },
   "devDependencies": {
+    "debug": "git+https://github.com/visionmedia/debug.git",
     "jasmine": "^2.8.0",
     "noble": "^1.8.1",
     "rollup": "^0.50.0",
