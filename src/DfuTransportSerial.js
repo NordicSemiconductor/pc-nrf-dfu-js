@@ -141,10 +141,8 @@ console.log(`Wire MTU: ${mtu}; un-encoded data max size: ${this._mtu}`);
         if (this._readyPromise) {
             return this._readyPromise;
         }
-        console.log('version command');
         return this._readyPromise = new Promise(res => {
             this._port.open(() => {
-                console.log('yes');
                 this._slipDecoder = new slip.Decoder({
                     onMessage: this._onData.bind(this)
                 });
@@ -168,6 +166,153 @@ console.log('-------------------------------------');
             });
         });
 
+    }
+
+    getProtocolVersion() {
+        if (this._readyPromise) {
+            return this._readyPromise;
+        }
+        return this._readyPromise = new Promise(res => {
+            this._port.open(() => {
+                this._slipDecoder = new slip.Decoder({
+                    onMessage: this._onData.bind(this)
+                });
+
+                this._port.on('data', (data)=>{
+                    return this._slipDecoder.decode(data);
+                });
+
+                const result = this._writeCommand(new Uint8Array([
+                    0x00,  // "Version Command" opcode
+                ]))
+                .then(this._read.bind(this))
+                .then(this._assertPacket(0x00, 1))
+                .then(protocolVersion => {
+                    return protocolVersion[0];
+                })
+                .catch(err => {
+                    console.log(err);
+                });
+
+                return res(result);
+            });
+        });
+    }
+
+    getHardwareVersion() {
+        if (this._readyPromise) {
+            return this._readyPromise;
+        }
+        return this._readyPromise = new Promise(res => {
+            this._port.open(() => {
+                this._slipDecoder = new slip.Decoder({
+                    onMessage: this._onData.bind(this)
+                });
+
+                this._port.on('data', (data)=>{
+                    console.log('on event');
+                    return this._slipDecoder.decode(data);
+                });
+
+                const result = this._writeCommand(new Uint8Array([
+                    0x0A,  // "Version Command" opcode
+                ]))
+                .then(this._read.bind(this))
+                .then(this._assertPacket(0x0A, 16))
+                .then(hardwareVersion => {
+                    const dataView = new DataView(hardwareVersion.buffer);
+                    return {
+                        part: dataView.getInt32(0),
+                        variant: dataView.getInt32(4),
+                        memory: {
+                            romSize: dataView.getInt32(8),
+                            ramSize: dataView.getInt32(12),
+                        },
+                    };
+                })
+                .catch(err => {
+                    console.log(err);
+                });
+
+                return res(result);
+            });
+        });
+    }
+    
+    getFirmwareVersionPromise(imageCount, firmwareVersion) {
+        if (!imageCount) {
+            imageCount = 0;
+        }
+        if (!firmwareVersion) {
+            firmwareVersion = {};
+        }
+        return this._writeCommand(new Uint8Array([
+                0x0B,  // "Version Command" opcode
+                '0x' + imageCount.toString(16),
+            ]))
+            .then(this._read.bind(this))
+            .then(this._assertPacket(0x0B, 13))
+            .then(data => {
+                const dataView = new DataView(data.buffer);
+                const imgType = dataView.getUint8(3);
+                if (imgType !== parseInt('0xFF')) {
+                    let firmware = {};
+                    firmware.version = dataView.getUint32(4);
+                    firmware.addr = dataView.getUint32(8);
+                    firmware.len = dataView.getUint32(12);
+                    switch (imgType) {
+                        case 0:
+                            firmwareVersion.softdevice = firmware;
+                            break;
+                        case 1:
+                            firmwareVersion.application.push(firmware);
+                            break;
+                        case 2:
+                            firmwareVersion.bootloader = firmware;
+                            break;
+                        default:
+                            throw new Error('Unkown firmware image type');
+                    }
+                    ++imageCount;
+                    return this.getFirmwareVersionPromise(imageCount, firmwareVersion);
+                }
+                else {
+                    return firmwareVersion;
+                }
+            })
+            .catch(err => {
+                console.log(err);
+            });
+    }
+
+    getFirmwareVersion() {
+        if (this._readyPromise) {
+            return this._readyPromise;
+        }
+        return this._readyPromise = new Promise(res => {
+            this._port.open(() => {
+                const promises = [];
+
+                this._slipDecoder = new slip.Decoder({
+                    onMessage: this._onData.bind(this)
+                });
+
+                this._port.on('data', (data)=>{
+console.log(' recv <-- ', data);
+console.log('-------------------------------------');
+                    const resultData = this._slipDecoder.decode(data);
+
+                    return resultData; 
+                });
+
+
+                const result = this.getFirmwareVersionPromise()
+                    .then(firmwareVersion => {
+                        return firmwareVersion;
+                    })
+                return res(result);
+            });
+        });
     }
 }
 

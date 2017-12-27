@@ -11,7 +11,7 @@ Promise.all([
         ports.forEach(port=>{
             console.log(port.vendorId + '/' + port.productId);
         })
-
+        console.log('Scanned');
         ports = ports.filter(port=>(
 //             (port.vendorId === '1366') || // Segger
             (port.vendorId === '1915' && port.productId === '521F') || // NordicSemi default USB SDFU, win
@@ -41,9 +41,10 @@ Promise.all([
     let serialTransport = new nrfDfu.DfuTransportSerial(port, 0);
 
     // console.log(serialTransport);
-    serialTransport.versionCommand()
+    serialTransport.getFirmwareVersion()
+    // serialTransport.getHardwareVersion()
     .then(res => {
-        console.log('lalalalalalal');
+        // console.log('lalalalalalal');
         console.log(res);
     });
     // console.log(response);
@@ -62,11 +63,3 @@ Promise.all([
 //         port.close();
 //     });
 });
-
-
-
-
-
-
-
-

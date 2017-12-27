@@ -14,9 +14,9 @@
     "test": "rollup -c rollup.config.js; jasmine"
   },
   "dependencies": {
-    "crc": "https://github.com/IvanSanchez/node-crc.git#no-buffer",
+    "crc": "git+https://github.com/IvanSanchez/node-crc.git#no-buffer",
     "jszip": "^3.1.4",
-    "slip": "https://github.com/IvanSanchez/slip.js.git"
+    "slip": "git+https://github.com/IvanSanchez/slip.js.git"
   },
   "devDependencies": {
     "jasmine": "^2.8.0",
