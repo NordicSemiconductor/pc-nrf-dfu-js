@@ -137,37 +137,6 @@ console.log(`Wire MTU: ${mtu}; un-encoded data max size: ${this._mtu}`);
         });
     }
 
-    versionCommand() {
-        if (this._readyPromise) {
-            return this._readyPromise;
-        }
-        return this._readyPromise = new Promise(res => {
-            this._port.open(() => {
-                this._slipDecoder = new slip.Decoder({
-                    onMessage: this._onData.bind(this)
-                });
-
-                this._port.on('data', (data)=>{
-console.log(' recv <-- ', data);
-console.log('-------------------------------------');
-                    return this._slipDecoder.decode(data);
-                });
-
-                let result = this._writeCommand(new Uint8Array([
-                    0x07,  // "Version Command" opcode
-                ]))
-                .then(this._read.bind(this))
-                .then(this._assertPacket(0x07, 2))
-                .catch(err => {
-                    console.log(err);
-                });
-
-                return res(result);
-            });
-        });
-
-    }
-
     getProtocolVersion() {
         if (this._readyPromise) {
             return this._readyPromise;
@@ -298,8 +267,6 @@ console.log('-------------------------------------');
                 });
 
                 this._port.on('data', (data)=>{
-console.log(' recv <-- ', data);
-console.log('-------------------------------------');
                     const resultData = this._slipDecoder.decode(data);
 
                     return resultData; 
