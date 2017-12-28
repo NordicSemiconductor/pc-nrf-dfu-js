@@ -7,6 +7,8 @@ import DfuAbstractTransport from './DfuAbstractTransport';
 // import {crc32} from 'crc';
 import crc32 from 'crc/src/crc32';
 
+const debug = require('debug')('dfu:sink');
+
 /**
  * Dummy DFU transport.
  * This will just consume bytes, sending them to /dev/null.
@@ -33,7 +35,7 @@ export default class DfuTransportSink extends DfuAbstractTransport {
     _createObject(type, size) {
         this._selectObject(type);
         this._sizes[type] = size;
-        console.info(`Sink DFU transport: created object of type ${type}, size ${size}`);
+        debug(`Sink DFU transport: created object of type ${type}, size ${size}`);
         return Promise.resolve();
     }
 
@@ -51,7 +53,7 @@ export default class DfuTransportSink extends DfuAbstractTransport {
         this._crcs[this._selected] = crc32(bytes, crcSoFar);
         return new Promise((res, rej)=>{
             setTimeout(()=>{
-                console.info(`Sink DFU transport: consumed ${bytes.length} bytes`);
+                debug(`Sink DFU transport: consumed ${bytes.length} bytes`);
                 res([this._offsets[this._selected], this._crcs[this._selected]])
             }, bytes / this._bytesPerMilliSecond);
         });

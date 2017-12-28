@@ -8,6 +8,8 @@ import crc32 from 'crc/src/crc32';
 
 import ProgressCounter from './ProgressCounter';
 
+const debug = require('debug')('dfu:transport');
+
 
 /**
  * Implements the logic common to all transports, but not the transport itself.
@@ -30,7 +32,7 @@ export default class DfuAbstractTransport {
     // transfer. Calling this before a sendInitPacket() will forcefully
     // re-send everything.
     restart() {
-        console.log('Forcefully restarting DFU procedure');
+        debug('Forcefully restarting DFU procedure');
         return this._createObject(1, 0x10);
     }
 
@@ -50,17 +52,17 @@ export default class DfuAbstractTransport {
     // Sends either a init payload ("init packet"/"command object") or a data payload
     // ("firmware image"/"data objects")
     _sendPayload(type, bytes, resumeAtChunkBoundary = false) {
-        console.log(`Sending payload of type ${type}`);
+        debug(`Sending payload of type ${type}`);
         return this._selectObject(type).then(([offset, crcSoFar, chunkSize])=>{
 
             if (offset !== 0) {
-                console.log(`Offset is not zero (${offset}). Checking if graceful continuation is possible.`)
+                debug(`Offset is not zero (${offset}). Checking if graceful continuation is possible.`)
                 const crc = crc32(bytes.subarray(0, offset));
 
                 if (crc === crcSoFar) {
-                    console.log('CRC match');
+                    debug('CRC match');
                     if (offset === bytes.length) {
-                        console.log('Payload already transferred sucessfully, sending execute command just in case.');
+                        debug('Payload already transferred sucessfully, sending execute command just in case.');
 
                         // Send an exec command, just in case the previous connection broke
                         // just before the exec command. An extra exec command will have no
@@ -74,7 +76,7 @@ export default class DfuAbstractTransport {
                         // another "execute" command, the second one will do nothing
                         // and yet receive an "OK" response code.
 
-                        console.log('Edge case: payload transferred up to page boundary; previous execute command might have been lost, re-sending.');
+                        debug('Edge case: payload transferred up to page boundary; previous execute command might have been lost, re-sending.');
 
                         return this._executeObject(type, chunkSize)
                         .then(()=>this._sendPayload(type, bytes, true));
@@ -85,7 +87,7 @@ export default class DfuAbstractTransport {
 //                         .then(()=>this._sendPayload(type, bytes, true));
 
                     } else {
-                        console.log(`Payload partially transferred sucessfully, continuing from offset ${offset}.`);
+                        debug(`Payload partially transferred sucessfully, continuing from offset ${offset}.`);
 
                         // Send the remainder of a half-finished chunk
                         const end = offset - (offset % chunkSize) + chunkSize;
@@ -98,7 +100,7 @@ export default class DfuAbstractTransport {
                     // parts of a chunk (re-creating it) on PRN CRC failures.
                     // But here it means that there is a CRC mismatch while trying to
                     // continue an interrupted DFU, and the behaviour in this case is to panic.
-                    console.log(`CRC mismatch: expected/actual 0x${crc.toString(16)}/0x${crcSoFar.toString(16)}`);
+                    debug(`CRC mismatch: expected/actual 0x${crc.toString(16)}/0x${crcSoFar.toString(16)}`);
 
                     return Promise.reject('A previous DFU process was interrupted, and it was left in such a state that cannot be continued. Please perform a DFU procedure disabling continuation.');
                 }
@@ -130,11 +132,11 @@ export default class DfuAbstractTransport {
 //         .then(()=>new Promise(res=>{setTimeout(res, 5100);}))    // Synthetic timeout for debugging
         .then(()=>{
             if (end >= bytes.length) {
-                console.log(`Sent ${end} bytes, this payload type is finished`);
+                debug(`Sent ${end} bytes, this payload type is finished`);
                 return Promise.resolve();
             } else {
                 // Send next chunk
-                console.log(`Sent ${end} bytes, not finished yet (until ${bytes.length})`);
+                debug(`Sent ${end} bytes, not finished yet (until ${bytes.length})`);
                 const nextEnd = Math.min(bytes.length, end + chunkSize);
 
                 return this._createObject(type, nextEnd - end)
@@ -157,6 +159,7 @@ export default class DfuAbstractTransport {
 
         return this._writeObject(subarray, crcSoFar, start)
         .then(()=>{
+            debug(`Payload type fully transferred, requesting explicit checksum`);
             return this._crcObject(end, crcAtChunkEnd);
         })
         .then(([offset, crc])=>{
@@ -165,14 +168,14 @@ export default class DfuAbstractTransport {
             }
 
 //             if (Math.random() < 0.35) {
-//                 console.log('DEBUG: faking CRC check failure at chunk end');
+//                 debug('DEBUG: faking CRC check failure at chunk end');
 //                 throw new Error(`Faking CRC error at ${end} bytes.`);
 //             }
 
             if (crcAtChunkEnd !== crc) {
                 throw new Error(`CRC mismatch after ${end} bytes have been sent: expected ${crcAtChunkEnd}, got ${crc}.`);
             } else {
-                console.log(`Explicit checksum OK at ${end} bytes`);
+                debug(`Explicit checksum OK at ${end} bytes`);
             }
         })
         .catch((err)=>{
@@ -180,7 +183,7 @@ export default class DfuAbstractTransport {
             if (retries >= 5) {
                 return Promise.reject(`Too many write failures. Last failure: ${err}`);
             }
-            console.log(`Chunk write failed (${err}) Re-sending the whole chunk starting at ${start}. Times retried: ${retries}`);
+            debug(`Chunk write failed (${err}) Re-sending the whole chunk starting at ${start}. Times retried: ${retries}`);
 //             throw err;
 
             /// FIXME: Instead of re-creating the whole chunk, select the payload
