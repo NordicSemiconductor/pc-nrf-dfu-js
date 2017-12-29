@@ -1,11 +1,4 @@
-
 import DfuTransportPrn from './DfuTransportPrn';
-
-// FIXME: Should be `import {crc32} from 'crc'`, https://github.com/alexgorbatchev/node-crc/pull/50
-// import * as crc from 'crc';
-// const crc32 = crc.crc32;
-// import {crc32} from 'crc';
-// import crc32 from 'crc/src/crc32';
 
 const debug = require('debug')('dfu:noble');
 
@@ -13,11 +6,11 @@ const debug = require('debug')('dfu:noble');
 
 /**
  * noble DFU transport.
- * 
+ *
  * 'noble' means "NOde Bluetooth Low Energy". The use case for this transport
  * is running it on a linux/MacOSX/windows host, which must have a BLE adapter itself.
  * See https://github.com/sandeepmistry/noble/blob/master/README.md
- * 
+ *
  * The "noble" transport must be given an instance of noble's "peripheral" when instantiated.
  */
 
@@ -25,203 +18,204 @@ export default class DfuTransportNoble extends DfuTransportPrn {
     constructor(peripheral, packetReceiveNotification = 16) {
         super(packetReceiveNotification);
 
-        this._peripheral = peripheral;
-        
+        this.peripheral = peripheral;
+
         // These will be populated when connecting to the BLE peripheral
-        this._dfuControlCharacteristic = undefined;
-        this._dfuPacketCharacteristic = undefined;
-        
+        this.dfuControlCharacteristic = undefined;
+        this.dfuPacketCharacteristic = undefined;
+
         // Hard-coded BLE MTU
-        this._mtu = 23;
+        this.mtu = 23;
     }
 
 
     // Given a command (including opcode), perform SLIP encoding and send it
     // through the wire.
-    _writeCommand(bytes) {
+    writeCommand(bytes) {
         // Cast the Uint8Array info a Buffer so it works on nodejs v6
-        bytes = new Buffer(bytes);
-        debug(' ctrl --> ', bytes);
+        const bytesBuf = new Buffer(bytes);
+        debug(' ctrl --> ', bytesBuf);
 
-        
-        return new Promise((res, rej)=>{
-            setTimeout(()=>{
-
-//                 this._dfuControlCharacteristic.once('write', ()=> {
-//                     debug(' wire --> ', bytes);
+        return new Promise((res, rej) => {
+            setTimeout(() => {
+//                 this.dfuControlCharacteristic.once('write', () => {
+//                     debug(' wire --> ', bytesBuf);
 //                     res();
 //                 })
 
-                this._dfuControlCharacteristic.write(bytes, false, (err)=>{
+                this.dfuControlCharacteristic.write(bytesBuf, false, err => {
                     if (err) {
                         rej(err);
                     } else {
                         res();
                     }
                 });
-                
             }, 100);
         });
     }
 
     // Given some payload bytes, pack them into a 0x08 command.
-    // The length of the bytes is guaranteed to be under this._mtu thanks
+    // The length of the bytes is guaranteed to be under this.mtu thanks
     // to the DfuTransportPrn functionality.
-    _writeData(bytes) {
+    writeData(bytes) {
         // Cast the Uint8Array info a Buffer so it works on nodejs v6
-        bytes = new Buffer(bytes);
-        debug(' data --> ', bytes);
-        
-        return new Promise((res, rej)=>{
+        const bytesBuf = new Buffer(bytes);
+        debug(' data --> ', bytesBuf);
+
+        return new Promise((res, rej) => {
 //             setTimeout(()=>{
-            
-//                 this._dfuPacketCharacteristic.once('write', ()=> {
-//                     debug(' wire --> ', bytes);
+
+//                 this.dfuPacketCharacteristic.once('write', () => {
+//                     debug(' wire --> ', bytesBuf);
 //                     res();
 //                 })
-            
-                this._dfuPacketCharacteristic.write(bytes, true, (err)=>{
-                    if (err) {
-                        rej(err);
-                    } else {
-                        res();
-                    }
-                });
+
+            this.dfuPacketCharacteristic.write(bytesBuf, true, err => {
+                if (err) {
+                    rej(err);
+                } else {
+                    res();
+                }
+            });
 //             }, 50);
         });
     }
 
-//     _read() {
+//     read() {
 //         return new Promise((res, rej)=>{
-//             this._dfuControlCharacteristic.read((err, data)=>{
+//             this.dfuControlCharacteristic.read((err, data)=>{
 //                 if (err) {
 //                     rej(err);
 //                 } else {
 //         debug(' recv <-- ', data);
-//                     res(this._parse(data));
+//                     res(this.parse(data));
 //                 }
 //             });
 //         });
 //     }
-    
+
     // Called whenever the control characteristic sends some bytes back
-//     _onData(bytes) {
+//     onData(bytes) {
 //         debug('Got data: ', bytes);
 //     }
-//     
-    // Aux. Connects to this._peripheral, discovers services and characteristics, 
-    // and stores a reference into this._dfuControlCharacteristic and this._dfuPacketCharacteristic
-    _getCharacteristics() {
-        return new Promise((res, rej)=>{
-            this._peripheral.connect((err)=>{
+//
+    // Aux. Connects to this.peripheral, discovers services and characteristics,
+    // and stores a reference into this.dfuControlCharacteristic and this.dfuPacketCharacteristic
+    getCharacteristics() {
+        return new Promise((res, rej) => {
+            this.peripheral.connect(err => {
                 if (err) {
                     return rej(err);
                 }
-                
-                debug('Instantiating noble transport to: ', this._peripheral);
-                
-                this._peripheral.discoverServices(['fe59'], (err1, [dfuService])=>{
-                    if (err1) { 
-                        return rej(err1); 
+
+                debug('Instantiating noble transport to: ', this.peripheral);
+
+                this.peripheral.discoverServices(['fe59'], (err1, [dfuService]) => {
+                    if (err1) {
+                        return rej(err1);
                     }
                     debug('discovered dfuService');
 
-                    dfuService.discoverCharacteristics(null, (err2, characteristics)=>{
-                        if (err2) { 
-                            return rej(err2); 
+                    dfuService.discoverCharacteristics(null, (err2, characteristics) => {
+                        if (err2) {
+                            return rej(err2);
                         }
                         debug('discovered the following characteristics:');
-                        for (var i in characteristics) {
-                            debug('  ' + i + ' uuid: ' + characteristics[i].uuid);
-                            
+                        for (const i in characteristics) {
+                            debug(`  ${i} uuid: ${characteristics[i].uuid}`);
+
                             if (characteristics[i].uuid === '8ec90001f3154f609fb8838830daea50') {
-                                this._dfuControlCharacteristic = characteristics[i];
+                                this.dfuControlCharacteristic = characteristics[i];
 //                                 debug(characteristics[i]);
-                                
                             }
                             if (characteristics[i].uuid === '8ec90002f3154f609fb8838830daea50') {
-                                this._dfuPacketCharacteristic = characteristics[i];
+                                this.dfuPacketCharacteristic = characteristics[i];
 //                                 debug(characteristics[i]);
                             }
                         }
-                        if (this._dfuControlCharacteristic && this._dfuPacketCharacteristic) {
+                        if (this.dfuControlCharacteristic && this.dfuPacketCharacteristic) {
                             return res();
-                        } else {
-                            return rej('Could not discover DFU control and packet characteristics')
                         }
+                        return rej('Could not discover DFU control and packet characteristics');
                     });
+                    return undefined;
                 });
+                return undefined;
             });
         });
     }
-    
+
     // Opens the port, sets the PRN, requests the MTU.
     // Returns a Promise when initialization is done.
-    _ready() {
-        if (this._readyPromise) {
-            return this._readyPromise;
+    ready() {
+        if (this.readyPromise) {
+            return this.readyPromise;
         }
 
-        return this._readyPromise = Promise.race([
-            this._getCharacteristics(),
-            new Promise((res, rej)=>{ setTimeout(()=>rej('Timeout while fetching characteristics from BLE peripheral'), 500) })
+        this.readyPromise = Promise.race([
+            this.getCharacteristics(),
+            new Promise((res, rej) => {
+                setTimeout(() => rej('Timeout while fetching characteristics from BLE peripheral'), 500);
+            }),
         ])
-        .then(()=>{
+        .then(() => {
             // Subscribe to notifications on the control characteristic
-            debug('control characteristic:', this._dfuControlCharacteristic.uuid, this._dfuControlCharacteristic.properties);
-            
-            return new Promise((res, rej)=>{
+            debug('control characteristic:', this.dfuControlCharacteristic.uuid, this.dfuControlCharacteristic.properties);
+
+            return new Promise((res, rej) => {
                 debug('Subscribing to notifications on the ctrl characteristic');
-                this._dfuControlCharacteristic.subscribe((err)=>{
-                    if (err) { 
-                        return rej('Could not subscribe to changes of the control characteristics'); 
+                this.dfuControlCharacteristic.subscribe(err => {
+                    if (err) {
+                        return rej('Could not subscribe to changes of the control characteristics');
                     }
-//                     this._dfuControlCharacteristic.on('data', this._onData.bind(this));
-                    this._dfuControlCharacteristic.on('data', (data)=>{
-            debug(' recv <-- ', data);
-                        return this._onData(data);
+//                     this.dfuControlCharacteristic.on('data', this.onData.bind(this));
+                    this.dfuControlCharacteristic.on('data', data => {
+                        debug(' recv <-- ', data);
+                        return this.onData(data);
                     });
                     return res();
                 });
-            })
+            });
         })
-        .then(()=>{
+        .then(() =>
             // Set the PRN value
-            return this._writeCommand(new Uint8Array([
+            this.writeCommand(new Uint8Array([
                 0x02,  // "Set PRN" opcode
-                this._prn >> 0 & 0xFF, // PRN LSB
-                this._prn >> 8 & 0xFF, // PRN MSB
+                // eslint-disable-next-line no-bitwise
+                this.prn & 0xFF, // PRN LSB
+                // eslint-disable-next-line no-bitwise
+                (this.prn >> 8) & 0xFF, // PRN MSB
             ]))
-            .then(this._read.bind(this))
-            .then(this._assertPacket(0x02, 0));
-        });
+            .then(this.read.bind(this))
+            .then(this.assertPacket(0x02, 0)),
+        );
 
-                    
+        return this.readyPromise;
 
 //                 // Set PRN
-//                 let result = this._writeCommand(new Uint8Array([
+//                 let result = this.writeCommand(new Uint8Array([
 //                     0x02,  // "Set PRN" opcode
-//                     this._prn >> 0 & 0xFF, // PRN LSB
-//                     this._prn >> 8 & 0xFF, // PRN MSB
+//                     this.prn >> 0 & 0xFF, // PRN LSB
+//                     this.prn >> 8 & 0xFF, // PRN MSB
 //                 ]))
-//                 .then(this._read.bind(this))
-//                 .then(this._assertPacket(0x02, 0))
+//                 .then(this.read.bind(this))
+//                 .then(this.assertPacket(0x02, 0))
 //                 // Request MTU
-//                 .then(()=>this._writeCommand(new Uint8Array([
+//                 .then(()=>this.writeCommand(new Uint8Array([
 //                     0x07    // "Request serial MTU" opcode
 //                 ])))
-//                 .then(this._read.bind(this))
-//                 .then(this._assertPacket(0x07, 2))
+//                 .then(this.read.bind(this))
+//                 .then(this.assertPacket(0x07, 2))
 //                 .then((bytes)=>{
 // //                     debug('Got MTU: ', bytes);
-// 
+//
 //                     let mtu =
 //                         bytes[1] * 256 +
 //                         bytes[0];
-// 
+//
 //                     // Convert wire MTU into max size of SLIP-decoded data:
-//                     this._mtu = Math.floor((mtu / 2) - 2);
-// debug(`Wire MTU: ${mtu}; un-encoded data max size: ${this._mtu}`);
+//                     this.mtu = Math.floor((mtu / 2) - 2);
+// debug(`Wire MTU: ${mtu}; un-encoded data max size: ${this.mtu}`);
 //                 });
 
 //                 return res(result);
@@ -229,7 +223,3 @@ export default class DfuTransportNoble extends DfuTransportPrn {
 //         });
     }
 }
-
-
-
-

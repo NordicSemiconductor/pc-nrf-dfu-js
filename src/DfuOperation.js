@@ -1,8 +1,4 @@
-
-import ProgressCounter from './ProgressCounter';
-
-const debug = require('debug')('dfu:operation');
-
+// import ProgressCounter from './ProgressCounter';
 
 /**
  * Represents a DFU Operation - the act of updating the firmware on a
@@ -22,18 +18,20 @@ const debug = require('debug')('dfu:operation');
  */
 export default class DfuOperation {
 
-    constructor(dfuUpdates, dfuTransport, autoStart=false) {
-        this._updates = dfuUpdates.updates;
-        this._updatesPerformed = 0;
-        this._transport = dfuTransport;
+    constructor(dfuUpdates, dfuTransport, autoStart = false) {
+        this.updates = dfuUpdates.updates;
+        // this.updatesPerformed = 0;
+        this.transport = dfuTransport;
 
-//         let totalSize = this._updates.reduce((update)=>)
-//         this._progressCounter = new ProgressCounter(totalSize);
+//         let totalSize = this.updates.reduce((update)=>)
+//         this.progressCounter = new ProgressCounter(totalSize);
 
-        if (this.autoStart) { this.start(); }
+        if (autoStart) {
+            this.start();
+        }
     }
 
-    get progressGenerator() { return this._progressGenerator; }
+    // get progressGenerator() { return this._progressGenerator; }
 
     /**
      * Starts the DFU operation. Returns a Promise that resolves as soon as
@@ -47,15 +45,16 @@ export default class DfuOperation {
      *
      * Calling start() more than once has no effect, and will only return a
      * reference to the first Promise that was returned.
+     *
+     * @param {Bool} forceful if should skip the steps
+     * @return {Promise} a Promise that resolves as soon as the DFU has been performed
      */
     start(forceful = false) {
-        if (this._finishPromise) { return this._finishPromise; }
-
-        return this._finishPromise = this._start(forceful);
-    }
-
-    _start(forceful) {
-        return this._performNextUpdate(0, forceful);
+        if (this.finishPromise) {
+            return this.finishPromise;
+        }
+        this.finishPromise = this.performNextUpdate(0, forceful);
+        return this.finishPromise;
     }
 
     // Takes in an update from this._update, performs it. Returns a Promise
@@ -63,41 +62,23 @@ export default class DfuOperation {
     // - Tell the transport to send the init packet
     // - Tell the transport to send the binary blob
     // - Proceed to the next update
-    _performNextUpdate(updateNumber, forceful) {
-        if (this._updates.length <= updateNumber) {
+    performNextUpdate(updateNumber, forceful) {
+        if (this.updates.length <= updateNumber) {
             return Promise.resolve();
         }
 
         let start;
         if (forceful) {
-            start = this._transport.restart();
+            start = this.transport.restart();
         } else {
             start = Promise.resolve();
         }
 
         return start
-        .then(()=>{
-            return this._transport.sendInitPacket(this._updates[updateNumber].initPacket)
-        })
-        .then(()=>{
-            return this._transport.sendFirmwareImage(this._updates[updateNumber].firmwareImage)
-        })
-        .then(()=>{
-            this._performNextUpdate(updateNumber+1, forceful);
-        });
+        .then(() => this.transport.sendInitPacket(this.updates[updateNumber].initPacket))
+        .then(() => this.transport.sendFirmwareImage(this.updates[updateNumber].firmwareImage))
+        .then(() => this.performNextUpdate(updateNumber + 1, forceful));
     }
 
 
 }
-
-
-
-
-
-
-
-
-
-
-
-

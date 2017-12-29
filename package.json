@@ -11,7 +11,8 @@
   "private": true,
   "scripts": {
     "rollup": "rollup -c rollup.config.js",
-    "test": "rollup -c rollup.config.js; jasmine"
+    "test": "rollup -c rollup.config.js; jasmine",
+    "lint": "eslint src/"
   },
   "dependencies": {
     "crc": "git+https://github.com/IvanSanchez/node-crc.git#no-buffer",
@@ -19,10 +20,18 @@
     "slip": "git+https://github.com/IvanSanchez/slip.js.git"
   },
   "devDependencies": {
+    "babel-core": "^6.26.0",
     "debug": "^3.1.0",
+    "eslint": "3.19.0",
+    "eslint-config-airbnb": "15.0.0",
+    "eslint-loader": "1.7.1",
+    "eslint-plugin-import": "2.2.0",
+    "eslint-plugin-jsx-a11y": "5.0.1",
+    "eslint-plugin-react": "7.0.1",
     "jasmine": "^2.8.0",
     "noble": "^1.8.1",
     "rollup": "^0.50.0",
+    "rollup-plugin-babel": "^3.0.3",
     "rollup-plugin-commonjs": "^8.2.1",
     "rollup-plugin-node-builtins": "^2.1.2",
     "rollup-plugin-node-globals": "^1.1.0",
