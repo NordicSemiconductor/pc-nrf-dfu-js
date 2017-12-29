@@ -108,12 +108,5 @@ SerialPort.list().then((ports)=>{
 //     });
 
 
-});
-
-
-
-
-
-
-
-
+})
+.catch(console.log);

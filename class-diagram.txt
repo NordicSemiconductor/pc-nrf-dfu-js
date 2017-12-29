@@ -11,17 +11,17 @@
 [DfuOperation|progressGenerator:Generator readonly|constructor(dfuUpdates dfuTransport autoStart);start(noContinue)]
 
 
-[DfuAbstractTransport|progressGenerator:Generator readonly|sendInitPacket(bytes); sendFirmwareImage(bytes); _createObject(type size); _writeObject(req reqLength); _crcObject(); _executeObject(); _selectObject(type); _updateProgress(bytes)]
+[DfuAbstractTransport|progressGenerator:Generator readonly|sendInitPacket(bytes); sendFirmwareImage(bytes); createObject(type size); writeObject(req reqLength); crcObject(); executeObject(); selectObject(type); updateProgress(bytes)]
 
 [note:A transport must define the 5 private methods. They map to the nRF SDK's 'DFU request operations'. A specific transport might do additional logic. i.e. splitting the writeObject request into smaller wire packets and checking CRCs for them.]-[DfuAbstractTransport]
 
-[note:The abstract transport implements the logic to split a init packet or a firmware image into 1KiB or 4KiB chunks (as per the _selectObject() return values) and perform several calls to _writeObject().]-[DfuAbstractTransport]
+[note:The abstract transport implements the logic to split a init packet or a firmware image into 1KiB or 4KiB chunks (as per the selectObject() return values) and perform several calls to writeObject().]-[DfuAbstractTransport]
 
 
 
 [DfuOperation]++-[DfuUpdates]
 [DfuOperation]++-[DfuAbstractTransport]
-[DfuAbstractTransport]^-[DfuTransportPrn||_writeCommand(bytes);_writeData(bytes);_read();_onData;_ready();_parse();_assertPacket();_writeObjectPiece()]
+[DfuAbstractTransport]^-[DfuTransportPrn||writeCommand(bytes);writeData(bytes);read();onData;ready();parse();assertPacket();writeObjectPiece()]
 [DfuAbstractTransport]^-[DfuSinkTransport]
 [DfuTransportPrn]^-[DfuTransportSerial]
 [DfuTransportPrn]^-[DfuTransportNoble]
@@ -39,11 +39,7 @@
 [note:There is also a use case for performing DFU over a nRF cloud gateway. Let's put that into the 'crazy ideas' pile for now.]
 
 
-[ProgressCounter|nextProgressUpdate:readonly;_current;_target|constructor(targetAmount);advance(amount)]
+[ProgressCounter|nextProgressUpdate:readonly;current;target|constructor(targetAmount);advance(amount)]
 
 [DfuOperation]++-[ProgressCounter]
 [DfuAbstractTransport]++-[ProgressCounter]
-
-
-
-

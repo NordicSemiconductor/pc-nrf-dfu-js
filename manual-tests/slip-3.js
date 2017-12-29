@@ -64,12 +64,5 @@ Promise.all([
     .then(()=>{
         port.close();
     });
-});
-
-
-
-
-
-
-
-
+})
+.catch(console.log);

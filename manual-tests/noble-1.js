@@ -35,10 +35,10 @@ noble.on('discover', function(peripheral) {
         
         let nobleTransport = new nrfDfu.DfuTransportNoble(peripheral, 1);
         
-//         nobleTransport._ready().then(()=>{
-//             nobleTransport._writeCommand(new Uint8Array([0x06, 0x02]));
+//         nobleTransport.ready().then(()=>{
+//             nobleTransport.writeCommand(new Uint8Array([0x06, 0x02]));
 //             
-//             nobleTransport._read().then((bytes)=>{
+//             nobleTransport.read().then((bytes)=>{
 //                 console.log('Received: ', bytes);
 //             });
 //         });
