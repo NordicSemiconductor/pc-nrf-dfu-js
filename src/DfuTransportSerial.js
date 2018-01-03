@@ -219,7 +219,11 @@ export default class DfuTransportSerial extends DfuTransportPrn {
                         fwVer.softdevice = firmware;
                         break;
                     case 1:
-                        fwVer.application.push(firmware);
+                        if (fwVer.applications) {
+                            fwVer.applications.push(firmware);
+                        } else {
+                            fwVer.applications = [firmware];
+                        }
                         break;
                     case 2:
                         fwVer.bootloader = firmware;
@@ -249,7 +253,6 @@ export default class DfuTransportSerial extends DfuTransportPrn {
 
                     return resultData;
                 });
-
 
                 const result = this.getFirmwareVersionPromise()
                     .then(firmwareVersion => firmwareVersion);
