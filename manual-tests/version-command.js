@@ -4,6 +4,12 @@ const nrfDfu = require('../dist/nrf-dfu.cjs');
 
 const SerialPort = require('serialport');
 
+const debug = require('debug');
+
+// Enable logging from all DFU functionality (see https://github.com/visionmedia/debug#set-dynamically)
+debug.enable('*');
+
+
 SerialPort.list().then(ports => {
     ports.forEach(port => {
         console.log(`${port.vendorId}/${port.productId}`);
@@ -23,8 +29,17 @@ SerialPort.list().then(ports => {
 .then(port => {
     const serialTransport = new nrfDfu.DfuTransportSerial(port, 0);
 
-    serialTransport.getFirmwareVersion()
-    .then(console.log)
+    serialTransport.getProtocolVersion()
+    .then(version=>console.log('DFU protocol version: ', version))
+    .then(()=>serialTransport.getHardwareVersion())
+    .then(version=>{
+        console.log('HW version part: ', version.part.toString(16))
+        console.log('HW version variant: ', version.variant.toString(16))
+        console.log('HW version ROM: ', version.memory.romSize)
+        console.log('HW version RAM: ', version.memory.ramSize)
+    })
+    .then(()=>serialTransport.getAllFirmwareVersions())
+    .then(version=>console.log('FW images: ', version))
     .then(() => port.close());
 })
 .catch(console.log);

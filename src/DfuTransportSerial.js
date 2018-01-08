@@ -21,6 +21,8 @@ export default class DfuTransportSerial extends DfuTransportPrn {
 
     // Given a command (including opcode), perform SLIP encoding and send it
     // through the wire.
+    // This ensures that the serial port is open by calling this.open() - the first
+    // call to writeCommand will actually open the port.
     writeCommand(bytes) {
         let encoded = slip.encode(bytes);
 
@@ -31,10 +33,12 @@ export default class DfuTransportSerial extends DfuTransportPrn {
         // Cast the Uint8Array info a Buffer so it works on nodejs v6
         encoded = new Buffer(encoded);
 
-        return new Promise(res => {
-            debug(' send --> ', encoded);
-            this.port.write(encoded, res);
-        });
+        return this.open().then(()=>
+            new Promise(res => {
+                debug(' send --> ', encoded);
+                this.port.write(encoded, res);
+            })
+        );
     }
 
     // Given some payload bytes, pack them into a 0x08 command.
@@ -47,14 +51,14 @@ export default class DfuTransportSerial extends DfuTransportPrn {
         return this.writeCommand(commandBytes);
     }
 
-    // Opens the port, sets the PRN, requests the MTU.
-    // Returns a Promise when initialization is done.
-    ready() {
-        if (this.readyPromise) {
-            return this.readyPromise;
+    // Opens the port, sets up the event handlers and logging.
+    // Returns a Promise when opening is done.
+    open() {
+        if (this.openPromise) {
+            return this.openPromise;
         }
 
-        this.readyPromise = new Promise(res => {
+        this.openPromise = new Promise(res=>{
             debug('Opening serial port.');
 
             this.port.open(() => {
@@ -65,15 +69,24 @@ export default class DfuTransportSerial extends DfuTransportPrn {
                 this.slipDecoder = new slip.Decoder({
                     onMessage: this.onData.bind(this),
                 });
-//                 this.port.on('data', (data)=>this.slipDecoder.decode(data));
 
                 this.port.on('data', data => {
                     debug(' recv <-- ', data);
-//                     return this.slipDecoder.decode.bind(this.slipDecoder)(data);
                     return this.slipDecoder.decode(data);
                 });
 
-//                 this.port.on('data', this.slipDecoder.decode.bind(this.slipDecoder));
+                res();
+            });
+        });
+        return this.openPromise;
+    }
+
+    // Initializes DFU procedure: after opening the port, sets the PRN and requests the MTU.
+    // Returns a Promise when initialization is done.
+    ready() {
+        if (this.readyPromise) {
+            return this.readyPromise;
+        }
 
 
                 // Ping
@@ -89,174 +102,137 @@ export default class DfuTransportSerial extends DfuTransportPrn {
 //                     }
 //                 })
 
-                // Set PRN
-                const result = this.writeCommand(new Uint8Array([
-                    0x02,  // "Set PRN" opcode
-                    // eslint-disable-next-line no-bitwise
-                    this.prn & 0xFF, // PRN LSB
-                    // eslint-disable-next-line no-bitwise
-                    (this.prn >> 8) & 0xFF, // PRN MSB
-                ]))
-                .then(this.read.bind(this))
-                .then(this.assertPacket(0x02, 0))
-                // Request MTU
-                .then(() => this.writeCommand(new Uint8Array([
-                    0x07,    // "Request serial MTU" opcode
-                ])))
-                .then(this.read.bind(this))
-                .then(this.assertPacket(0x07, 2))
-                .then(bytes => {
-                    const mtu = (bytes[1] * 256) + bytes[0];
+        this.readyPromise = this.writeCommand(new Uint8Array([
+            0x02,  // "Set PRN" opcode
+            // eslint-disable-next-line no-bitwise
+            this.prn & 0xFF, // PRN LSB
+            // eslint-disable-next-line no-bitwise
+            (this.prn >> 8) & 0xFF, // PRN MSB
+        ]))
+        .then(this.read.bind(this))
+        .then(this.assertPacket(0x02, 0))
+        // Request MTU
+        .then(() => this.writeCommand(new Uint8Array([
+            0x07,    // "Request serial MTU" opcode
+        ])))
+        .then(this.read.bind(this))
+        .then(this.assertPacket(0x07, 2))
+        .then(bytes => {
+            const mtu = (bytes[1] * 256) + bytes[0];
 
-                    // Convert wire MTU into max size of data before SLIP encoding:
-                    // This takes into account:
-                    // - SLIP encoding ( /2 )
-                    // - SLIP end separator ( -1 )
-                    // - Serial DFU write command ( -1 )
-                    this.mtu = Math.floor((mtu / 2) - 2);
+            // Convert wire MTU into max size of data before SLIP encoding:
+            // This takes into account:
+            // - SLIP encoding ( /2 )
+            // - SLIP end separator ( -1 )
+            // - Serial DFU write command ( -1 )
+            this.mtu = Math.floor((mtu / 2) - 2);
 
-                    // Round down to multiples of 4.
-                    // This is done to avoid errors while writing to flash memory:
-                    // writing an unaligned number of bytes will result in an
-                    // error in most chips.
-                    this.mtu -= this.mtu % 4;
+            // Round down to multiples of 4.
+            // This is done to avoid errors while writing to flash memory:
+            // writing an unaligned number of bytes will result in an
+            // error in most chips.
+            this.mtu -= this.mtu % 4;
 
-                    // DEBUG: Force a specific MTU.
-                    this.mtu = Math.min(this.mtu, 20);
+            // DEBUG: Force a specific MTU.
+            this.mtu = Math.min(this.mtu, 20);
 
-                    debug(`Serial wire MTU: ${mtu}; un-encoded data max size: ${this.mtu}`);
-                });
-
-                return res(result);
-            });
+            debug(`Serial wire MTU: ${mtu}; un-encoded data max size: ${this.mtu}`);
         });
+
         return this.readyPromise;
     }
 
+    // Returns a Promise to the version of the DFU protocol that the target implements, as
+    // a single integer between 0 to 255.
+    // Only bootloaders from 2018 (SDK >= v15) for development boards implement this command.
     getProtocolVersion() {
-        if (this.readyPromise) {
-            return this.readyPromise;
-        }
-        this.readyPromise = new Promise(res => {
-            this.port.open(() => {
-                this.slipDecoder = new slip.Decoder({
-                    onMessage: this.onData.bind(this),
-                });
+        debug(`GetProtocolVersion`);
 
-                this.port.on('data', data => this.slipDecoder.decode(data));
-
-                const result = this.writeCommand(new Uint8Array([
-                    0x00,  // "Version Command" opcode
-                ]))
-                .then(this.read.bind(this))
-                .then(this.assertPacket(0x00, 1))
-                .then(protocolVersion => protocolVersion[0])
-                .catch(debug);
-
-                return res(result);
-            });
-        });
-        return this.readyPromise;
+        return this.writeCommand(new Uint8Array([
+            0x00,  // "Version Command" opcode
+        ]))
+        .then(this.read.bind(this))
+        .then(this.assertPacket(0x00, 1))
+        .then(bytes => bytes[0]);
     }
 
+    // Returns a Promise to the version of the DFU protocol that the target implements, as
+    // an object with descriptive property names.
+    // Only bootloaders from 2018 (SDK >= v15) for development boards implement this command.
     getHardwareVersion() {
-        if (this.readyPromise) {
-            return this.readyPromise;
-        }
-        this.readyPromise = new Promise(res => {
-            this.port.open(() => {
-                this.slipDecoder = new slip.Decoder({
-                    onMessage: this.onData.bind(this),
-                });
+        debug(`GetHardwareVersionn`);
 
-                this.port.on('data', data => {
-                    debug('on event');
-                    return this.slipDecoder.decode(data);
-                });
-
-                const result = this.writeCommand(new Uint8Array([
-                    0x0A,  // "Version Command" opcode
-                ]))
-                .then(this.read.bind(this))
-                .then(this.assertPacket(0x0A, 16))
-                .then(hardwareVersion => {
-                    const dataView = new DataView(hardwareVersion.buffer);
-                    return {
-                        part: dataView.getInt32(0),
-                        variant: dataView.getInt32(4),
-                        memory: {
-                            romSize: dataView.getInt32(8),
-                            ramSize: dataView.getInt32(12),
-                        },
-                    };
-                })
-                .catch(debug);
-
-                return res(result);
-            });
+        return this.writeCommand(new Uint8Array([
+            0x0A,  // "Version Command" opcode
+        ]))
+        .then(this.read.bind(this))
+        .then(this.assertPacket(0x0A, 16))
+        .then(bytes => {
+            const dataView = new DataView(bytes.buffer);
+            return {
+                part: dataView.getInt32(bytes.byteOffset + 0, true),
+                variant: dataView.getInt32(bytes.byteOffset + 4, true),
+                memory: {
+                    romSize: dataView.getInt32(bytes.byteOffset + 8, true),
+                    ramSize: dataView.getInt32(bytes.byteOffset + 12, true),
+                },
+            };
         });
-        return this.readyPromise;
     }
 
-    getFirmwareVersionPromise(imageCount = 0, firmwareVersion = {}) {
+    // Given an image number (0-indexed), returns a Promise to a plain object describing
+    // that firmware image, or undefined if there is no image at that index.
+    // Only bootloaders from 2018 (SDK >= v15) for development boards implement this command.
+    getFirmwareVersion(imageCount = 0) {
+        debug(`GetFirmwareVersion`);
+
         return this.writeCommand(new Uint8Array([
             0x0B,  // "Version Command" opcode
             `0x${imageCount.toString(16)}`,
         ]))
         .then(this.read.bind(this))
         .then(this.assertPacket(0x0B, 13))
-        .then(data => {
-            const dataView = new DataView(data.buffer);
-            const imgType = dataView.getUint8(3);
-            if (imgType !== 0xFF) {
-                const firmware = {};
-                firmware.version = dataView.getUint32(4);
-                firmware.addr = dataView.getUint32(8);
-                firmware.len = dataView.getUint32(12);
-                const fwVer = Object.assign(firmwareVersion);
-                switch (imgType) {
-                    case 0:
-                        fwVer.softdevice = firmware;
-                        break;
-                    case 1:
-                        fwVer.application.push(firmware);
-                        break;
-                    case 2:
-                        fwVer.bootloader = firmware;
-                        break;
-                    default:
-                        throw new Error('Unkown firmware image type');
-                }
-                return this.getFirmwareVersionPromise(imageCount + 1, fwVer);
+        .then(bytes => {
+            const dataView = new DataView(bytes.buffer);
+            let imgType = dataView.getUint8(bytes.byteOffset + 0, true);
+
+            switch (imgType) {
+                case 0xFF:
+                    // Meaning "no image at this index"
+                    return;
+                case 0:
+                    imgType = 'SoftDevice';
+                    break;
+                case 1:
+                    imgType = 'Application';
+                    break;
+                case 2:
+                    imgType = 'Bootloader';
+                    break;
+                default:
+                    throw new Error('Unkown firmware image type');
             }
-            return firmwareVersion;
-        })
-        .catch(debug);
+
+            return {
+                version: dataView.getUint32(bytes.byteOffset + 1, true),
+                addr: dataView.getUint32(bytes.byteOffset + 5, true),
+                length: dataView.getUint32(bytes.byteOffset + 9, true),
+                imageType: imgType
+            };
+        });
     }
 
-    getFirmwareVersion() {
-        if (this.readyPromise) {
-            return this.readyPromise;
-        }
-        this.readyPromise = new Promise(res => {
-            this.port.open(() => {
-                this.slipDecoder = new slip.Decoder({
-                    onMessage: this.onData.bind(this),
-                });
-
-                this.port.on('data', data => {
-                    const resultData = this.slipDecoder.decode(data);
-
-                    return resultData;
-                });
-
-
-                const result = this.getFirmwareVersionPromise()
-                    .then(firmwareVersion => firmwareVersion);
-                return res(result);
-            });
-        });
-
-        return this.readyPromise;
+    // Returns an array containing information about all available firmware images, by
+    // sending several GetFirmwareVersion commands.
+    getAllFirmwareVersions(index = 0, accum = []) {
+        return this.getFirmwareVersion(index)
+        .then(imageInfo=>{
+            if (imageInfo) {
+                accum.push(imageInfo);
+                return this.getAllFirmwareVersions(index+1, accum);
+            } else {
+                return accum;
+            }
+        })
     }
 }
