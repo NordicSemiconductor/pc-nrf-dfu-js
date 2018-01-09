@@ -168,13 +168,15 @@ export default class DfuTransportSerial extends DfuTransportPrn {
         .then(this.read.bind(this))
         .then(this.assertPacket(0x0A, 16))
         .then(bytes => {
-            const dataView = new DataView(bytes.buffer);
+            // Decode little-endian fields, by using a DataView with the
+            // same buffer *and* offset than the Uint8Array for the packet payload
+            const dataView = new DataView(bytes.buffer, bytes.byteOffset);
             return {
-                part: dataView.getInt32(bytes.byteOffset + 0, true),
-                variant: dataView.getInt32(bytes.byteOffset + 4, true),
+                part: dataView.getInt32(0, true),
+                variant: dataView.getInt32(4, true),
                 memory: {
-                    romSize: dataView.getInt32(bytes.byteOffset + 8, true),
-                    ramSize: dataView.getInt32(bytes.byteOffset + 12, true),
+                    romSize: dataView.getInt32(8, true),
+                    ramSize: dataView.getInt32(12, true),
                 },
             };
         });
@@ -193,8 +195,10 @@ export default class DfuTransportSerial extends DfuTransportPrn {
         .then(this.read.bind(this))
         .then(this.assertPacket(0x0B, 13))
         .then(bytes => {
-            const dataView = new DataView(bytes.buffer);
-            let imgType = dataView.getUint8(bytes.byteOffset + 0, true);
+            // Decode little-endian fields, by using a DataView with the
+            // same buffer *and* offset than the Uint8Array for the packet payload
+            const dataView = new DataView(bytes.buffer, bytes.byteOffset);
+            let imgType = dataView.getUint8(0, true);
 
             switch (imgType) {
                 case 0xFF:
@@ -214,9 +218,9 @@ export default class DfuTransportSerial extends DfuTransportPrn {
             }
 
             return {
-                version: dataView.getUint32(bytes.byteOffset + 1, true),
-                addr: dataView.getUint32(bytes.byteOffset + 5, true),
-                length: dataView.getUint32(bytes.byteOffset + 9, true),
+                version: dataView.getUint32(1, true),
+                addr: dataView.getUint32(5, true),
+                length: dataView.getUint32(9, true),
                 imageType: imgType,
             };
         });
