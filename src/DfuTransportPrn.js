@@ -256,10 +256,11 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
             this.read()
             .then(this.assertPacket(0x03, 8))
             .then(bytes => {
-                // Decode little-endian fields
-                const bytesView = new DataView(bytes.buffer);
-                const offset = bytesView.getUint32(bytes.byteOffset + 0, true);
-                const crc = bytesView.getUint32(bytes.byteOffset + 4, true);
+                // Decode little-endian fields, by using a DataView with the
+                // same buffer *and* offset than the Uint8Array for the packet payload
+                const bytesView = new DataView(bytes.buffer, bytes.byteOffset);
+                const offset = bytesView.getUint32(0, true);
+                const crc = bytesView.getUint32(4, true);
 
 //                 // DEBUG: Once in every 11 CRC responses, apply a XOR to the CRC
 //                 // to make it look like something has failed.

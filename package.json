@@ -4,7 +4,7 @@
   "description": "JS implementation of the nRF DFU protocol",
   "esnext:main": "src/index.js",
   "main": "dist/nrf-dfu.cjs.js",
-  "module": "dist/nrf-dfu.es6.js",
+  "module": "src/index.js",
   "browser": "dist/nrf-dfu.browser.js",
   "author": "Iván Sánchez Ortega <ivan@sanchezortega.es>",
   "license": "Propietary",

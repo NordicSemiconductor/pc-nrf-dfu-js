@@ -41,7 +41,7 @@ export default [
         external: ['buffer', 'fs', 'jszip', 'debug'],
         output: [
             { file: pkg.main, format: 'cjs', sourcemap: true },
-            { file: pkg.module, format: 'es', sourcemap: true }
+//             { file: pkg.module, format: 'es', sourcemap: true }
         ],
         plugins: [
             resolve(), // so Rollup can find `crc32`
