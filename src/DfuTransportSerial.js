@@ -33,11 +33,11 @@ export default class DfuTransportSerial extends DfuTransportPrn {
         // Cast the Uint8Array info a Buffer so it works on nodejs v6
         encoded = new Buffer(encoded);
 
-        return this.open().then(()=>
+        return this.open().then(() =>
             new Promise(res => {
                 debug(' send --> ', encoded);
                 this.port.write(encoded, res);
-            })
+            }),
         );
     }
 
@@ -58,7 +58,7 @@ export default class DfuTransportSerial extends DfuTransportPrn {
             return this.openPromise;
         }
 
-        this.openPromise = new Promise(res=>{
+        this.openPromise = new Promise(res => {
             debug('Opening serial port.');
 
             this.port.open(() => {
@@ -146,7 +146,7 @@ export default class DfuTransportSerial extends DfuTransportPrn {
     // a single integer between 0 to 255.
     // Only bootloaders from 2018 (SDK >= v15) for development boards implement this command.
     getProtocolVersion() {
-        debug(`GetProtocolVersion`);
+        debug('GetProtocolVersion');
 
         return this.writeCommand(new Uint8Array([
             0x00,  // "Version Command" opcode
@@ -160,7 +160,7 @@ export default class DfuTransportSerial extends DfuTransportPrn {
     // an object with descriptive property names.
     // Only bootloaders from 2018 (SDK >= v15) for development boards implement this command.
     getHardwareVersion() {
-        debug(`GetHardwareVersionn`);
+        debug('GetHardwareVersionn');
 
         return this.writeCommand(new Uint8Array([
             0x0A,  // "Version Command" opcode
@@ -184,7 +184,7 @@ export default class DfuTransportSerial extends DfuTransportPrn {
     // that firmware image, or undefined if there is no image at that index.
     // Only bootloaders from 2018 (SDK >= v15) for development boards implement this command.
     getFirmwareVersion(imageCount = 0) {
-        debug(`GetFirmwareVersion`);
+        debug('GetFirmwareVersion');
 
         return this.writeCommand(new Uint8Array([
             0x0B,  // "Version Command" opcode
@@ -217,7 +217,7 @@ export default class DfuTransportSerial extends DfuTransportPrn {
                 version: dataView.getUint32(bytes.byteOffset + 1, true),
                 addr: dataView.getUint32(bytes.byteOffset + 5, true),
                 length: dataView.getUint32(bytes.byteOffset + 9, true),
-                imageType: imgType
+                imageType: imgType,
             };
         });
     }
@@ -226,13 +226,12 @@ export default class DfuTransportSerial extends DfuTransportPrn {
     // sending several GetFirmwareVersion commands.
     getAllFirmwareVersions(index = 0, accum = []) {
         return this.getFirmwareVersion(index)
-        .then(imageInfo=>{
+        .then(imageInfo => {
             if (imageInfo) {
                 accum.push(imageInfo);
-                return this.getAllFirmwareVersions(index+1, accum);
-            } else {
-                return accum;
+                return this.getAllFirmwareVersions(index + 1, accum);
             }
-        })
+            return accum;
+        });
     }
 }
