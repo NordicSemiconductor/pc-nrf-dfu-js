@@ -2,6 +2,7 @@
 import crc32 from 'crc/src/crc32';
 
 import DfuAbstractTransport from './DfuAbstractTransport';
+import { errorMessages, extendedErrorMessages } from './DfuErrorConstants';
 
 const debug = require('debug')('dfu:prntransport');
 
@@ -122,6 +123,7 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
     // Parses a received DFU response packet/message, does a couple of checks,
     // then returns an array of the form [opcode, payload] if the
     // operation was sucessful.
+    // If there were any errors, returns a rejected Promise with an error message.
     parse(bytes) {
 // console.log('Received SLIP packet: ', bytes);
         if (bytes[0] !== 0x60) {
@@ -132,28 +134,24 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
         if (resultCode === 0x01) {
             debug('Parsed DFU response packet: opcode ', opcode, ', payload: ', bytes.subarray(3));
             return Promise.resolve([opcode, bytes.subarray(3)]);
-        } else if (resultCode === 0x00) {
-            return Promise.reject('Received error from DFU target: Missing or malformed opcode');
-        } else if (resultCode === 0x02) {
-            return this.read();
-            // TODO: why two returns here?
-            // return Promise.reject('Received error from DFU target: Invalid opcode');
-        } else if (resultCode === 0x03) {
-            return Promise.reject('Received error from DFU target: A parameter for the opcode was missing, or unsupported opcode');
-        } else if (resultCode === 0x04) {
-            return Promise.reject('Received error from DFU target: Not enough memory for the data object');
-        } else if (resultCode === 0x05) {
-            return Promise.reject('Received error from DFU target: The data object didn\'t match firmware/hardware, or missing crypto signature, or command parse failed');
-        } else if (resultCode === 0x07) {
-            return Promise.reject('Received error from DFU target: Unsupported object type for create/read operation');
-        } else if (resultCode === 0x08) {
-            return Promise.reject('Received error from DFU target: Cannot allow this operation in the current DFU state');
-        } else if (resultCode === 0x0A) {
-            return Promise.reject('Received error from DFU target: Operation failed');
-        } else if (resultCode === 0x0A) {
-            return Promise.reject('Received error from DFU target: Extended error');
         }
-        return Promise.reject(`Received unknown result code from DFU target: ${resultCode}`);
+        
+        let errorStr;
+        if (resultCode in errorMessages) {
+            errorStr = `Received error from DFU target: ${errorMessages[resultCode]}`;
+        } else if (resultCode === 0x0B) {
+            const extendedErrorCode = bytes[3];
+            if (extendedErrorCode in extendedErrorMessages) {
+                errorStr = `Received extended error from DFU target: ${extendedErrorMessages[extendedErrorCode]}`;
+            } else {
+                errorStr = `Received unknown extended result code from DFU target: 0x0B 0x${extendedErrorCode.toString(16)}`;
+            }
+        } else {
+            errorStr = `Received unknown result code from DFU target: 0x${resultCode.toString(16)}`;
+        }
+
+        debug(errorStr);
+        return Promise.reject(errorStr);
     }
 
 
