@@ -1,7 +1,7 @@
 {
     "extends": [
         "eslint:recommended",
-        "airbnb"
+        "airbnb-base"
     ],
     "rules": {
         "indent": [
@@ -10,14 +10,6 @@
             {
                 "SwitchCase": 1
             }
-        ],
-        "react/jsx-indent": [
-            "error",
-            4
-        ],
-        "react/jsx-indent-props": [
-            "error",
-            4
         ],
         "quotes": [
             "error",
@@ -42,12 +34,11 @@
                 "ignore": [ "nrfconnect/.*", "pc-ble-driver-js", "pc-nrfjprog-js", "serialport", "electron" ]
             }
         ],
-        "import/extensions": ["off"]
+        "import/extensions": ["off"],
+        "no-undef": 1,
+        "no-unused-vars": 1,
     },
-    "no-undef": 1,
-    "no-unused-vars": 1,
     "plugins": [
-        "react",
         "import"
     ],
     "env": {

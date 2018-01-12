@@ -3,7 +3,7 @@ import resolve from 'rollup-plugin-node-resolve';
 import commonjs from 'rollup-plugin-commonjs';
 import builtins from 'rollup-plugin-node-builtins';
 import globals from 'rollup-plugin-node-globals';
-import babel from 'rollup-plugin-babel';
+import eslint from 'rollup-plugin-eslint';
 import pkg from './package.json';
 
 export default [
@@ -21,10 +21,8 @@ export default [
         },
         name: 'nrfDfu',
         plugins: [
+            eslint(),
             resolve(), // so Rollup can find `crc32`
-            babel({
-                exclude: 'node_modules/**'
-            }),
             commonjs(),
             builtins(),
             globals()
@@ -44,10 +42,8 @@ export default [
 //             { file: pkg.module, format: 'es', sourcemap: true }
         ],
         plugins: [
+            eslint(),
             resolve(), // so Rollup can find `crc32`
-            babel({
-                exclude: 'node_modules/**'
-            })
 // 			commonjs() // so Rollup can convert `crc32` to an ES module
         ]
     }
