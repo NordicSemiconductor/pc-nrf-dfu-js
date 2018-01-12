@@ -198,7 +198,7 @@ export default class DfuTransportSerial extends DfuTransportPrn {
     }
 
     // Given an image number (0-indexed), returns a Promise to a plain object describing
-    // that firmware image, or undefined if there is no image at that index.
+    // that firmware image, or boolean false if there is no image at that index.
     // Only bootloaders from 2018 (SDK >= v15) for development boards implement this command.
     getFirmwareVersion(imageCount = 0) {
         debug('GetFirmwareVersion');
