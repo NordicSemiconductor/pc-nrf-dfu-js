@@ -58,11 +58,16 @@ export default class DfuTransportSerial extends DfuTransportPrn {
             return this.openPromise;
         }
 
-        this.openPromise = new Promise(res => {
+        this.openPromise = new Promise((res, rej) => {
             debug('Opening serial port.');
 
-            this.port.open(() => {
-                debug('Initializing DFU protocol (PRN and MTU).');
+
+            this.port.open(err => {
+                if (err) {
+                    return rej(err);
+                }
+
+                debug('Initializing SLIP decoder.');
                 // Start listening for data, and pipe it all through a SLIP decoder.
                 // This code will listen to events from the SLIP decoder instead
                 // of from the serial port itself.
@@ -75,13 +80,14 @@ export default class DfuTransportSerial extends DfuTransportPrn {
                     return this.slipDecoder.decode(data);
                 });
 
-                res();
+                return res();
             });
         });
         return this.openPromise;
     }
 
-    // Initializes DFU procedure: after opening the port, sets the PRN and requests the MTU.
+    // Initializes DFU procedure: sets the PRN and requests the MTU.
+    // The serial port is implicitly opened during the first call to writeCommand().
     // Returns a Promise when initialization is done.
     ready() {
         if (this.readyPromise) {
@@ -133,9 +139,6 @@ export default class DfuTransportSerial extends DfuTransportPrn {
             // error in most chips.
             this.mtu -= this.mtu % 4;
 
-            // DEBUG: Force a specific MTU.
-            this.mtu = Math.min(this.mtu, 20);
-
             debug(`Serial wire MTU: ${mtu}; un-encoded data max size: ${this.mtu}`);
         });
 
@@ -153,7 +156,11 @@ export default class DfuTransportSerial extends DfuTransportPrn {
         ]))
         .then(this.read.bind(this))
         .then(this.assertPacket(0x00, 1))
-        .then(bytes => bytes[0]);
+        .then(bytes => bytes[0])
+        .then(protocolVersion => {
+            debug('ProtocolVersion: ', protocolVersion);
+            return protocolVersion;
+        });
     }
 
     // Returns a Promise to the version of the DFU protocol that the target implements, as
@@ -179,11 +186,19 @@ export default class DfuTransportSerial extends DfuTransportPrn {
                     ramSize: dataView.getInt32(12, true),
                 },
             };
+        })
+        .then(hwVersion => {
+            debug('HardwareVersion part: ', hwVersion.part.toString(16));
+            debug('HardwareVersion variant: ', hwVersion.variant.toString(16));
+            debug('HardwareVersion ROM: ', hwVersion.memory.romSize);
+            debug('HardwareVersion RAM: ', hwVersion.memory.ramSize);
+
+            return hwVersion;
         });
     }
 
     // Given an image number (0-indexed), returns a Promise to a plain object describing
-    // that firmware image, or undefined if there is no image at that index.
+    // that firmware image, or boolean false if there is no image at that index.
     // Only bootloaders from 2018 (SDK >= v15) for development boards implement this command.
     getFirmwareVersion(imageCount = 0) {
         debug('GetFirmwareVersion');
@@ -203,7 +218,7 @@ export default class DfuTransportSerial extends DfuTransportPrn {
             switch (imgType) {
                 case 0xFF:
                     // Meaning "no image at this index"
-                    return;
+                    return false;
                 case 0:
                     imgType = 'SoftDevice';
                     break;
@@ -223,6 +238,15 @@ export default class DfuTransportSerial extends DfuTransportPrn {
                 length: dataView.getUint32(9, true),
                 imageType: imgType,
             };
+        })
+        .then(fwVersion => {
+            if (fwVersion) {
+                debug(`FirmwareVersion: image ${imageCount} is ${fwVersion.imageType} @0x${fwVersion.addr.toString(16)}+0x${fwVersion.length}`);
+            } else {
+                debug('FirmwareVersion: no more images.');
+            }
+
+            return fwVersion;
         });
     }
 
