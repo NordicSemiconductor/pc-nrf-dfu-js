@@ -121,7 +121,7 @@ export default class DfuTransportNoble extends DfuTransportPrn {
                             return rej(err2);
                         }
                         debug('discovered the following characteristics:');
-                        for (const i in characteristics) {
+                        for (let i = 0, l = characteristics.length; i < l; i += 1) {
                             debug(`  ${i} uuid: ${characteristics[i].uuid}`);
 
                             if (characteristics[i].uuid === '8ec90001f3154f609fb8838830daea50') {
