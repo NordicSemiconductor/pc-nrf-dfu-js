@@ -7,7 +7,7 @@
 
 export const errorMessages = {
     0x00: 'Missing or malformed opcode',
-//  0x01: success
+    //  0x01: success
     0x02: 'Opcode unknown or not supported',
     0x03: 'A parameter for the opcode was missing',
     0x04: 'Not enough memory for the data object',
@@ -16,10 +16,10 @@ export const errorMessages = {
     // use extended error codes instead.
     0x05: 'The data object didn\'t match firmware/hardware, or missing crypto signature, or malformed protocol buffer, or command parse failed',
 
-//  0x06: missing from the spec
+    //  0x06: missing from the spec
     0x07: 'Unsupported object type for create/read operation',
     0x08: 'Cannot allow this operation in the current DFU state',
-//  0x09: missing from the spec
+    //  0x09: missing from the spec
     0x0A: 'Operation failed',
 //  0x0B: extended error, will read next byte from the response and use it as extended error code
 };

@@ -31,14 +31,13 @@ export default class DfuTransportSerial extends DfuTransportPrn {
         encoded = encoded.subarray(1);
 
         // Cast the Uint8Array info a Buffer so it works on nodejs v6
-        encoded = new Buffer(encoded);
+        encoded = Buffer.from(encoded);
 
         return this.open().then(() =>
             new Promise(res => {
                 debug(' send --> ', encoded);
                 this.port.write(encoded, res);
-            }),
-        );
+            }));
     }
 
     // Given some payload bytes, pack them into a 0x08 command.
@@ -94,53 +93,52 @@ export default class DfuTransportSerial extends DfuTransportPrn {
             return this.readyPromise;
         }
 
-
-                // Ping
-//                 let result = this._write(new Uint8Array([
-//                     0x09,   // "Ping" opcode
-//                     0xAB    // Ping ID
-//                 ]))
-//                 .then(this.read.bind(this))
-//                 .then(this.assertPacket(0x09, 1))
-//                 .then((bytes)=>{
-//                     if (bytes[0] !== 0xAB) {
-//                         throw new Error('Expected a ping ID of 0xAB, got ' + bytes + ' instead');
-//                     }
-//                 })
+        // Ping
+        // let result = this._write(new Uint8Array([
+        //     0x09,   // "Ping" opcode
+        //     0xAB    // Ping ID
+        // ]))
+        // .then(this.read.bind(this))
+        // .then(this.assertPacket(0x09, 1))
+        // .then((bytes)=>{
+        //     if (bytes[0] !== 0xAB) {
+        //         throw new Error('Expected a ping ID of 0xAB, got ' + bytes + ' instead');
+        //     }
+        // })
 
         this.readyPromise = this.writeCommand(new Uint8Array([
-            0x02,  // "Set PRN" opcode
+            0x02, // "Set PRN" opcode
             // eslint-disable-next-line no-bitwise
             this.prn & 0xFF, // PRN LSB
             // eslint-disable-next-line no-bitwise
             (this.prn >> 8) & 0xFF, // PRN MSB
         ]))
-        .then(this.read.bind(this))
-        .then(this.assertPacket(0x02, 0))
-        // Request MTU
-        .then(() => this.writeCommand(new Uint8Array([
-            0x07,    // "Request serial MTU" opcode
-        ])))
-        .then(this.read.bind(this))
-        .then(this.assertPacket(0x07, 2))
-        .then(bytes => {
-            const mtu = (bytes[1] * 256) + bytes[0];
+            .then(this.read.bind(this))
+            .then(this.assertPacket(0x02, 0))
+            // Request MTU
+            .then(() => this.writeCommand(new Uint8Array([
+                0x07, // "Request serial MTU" opcode
+            ])))
+            .then(this.read.bind(this))
+            .then(this.assertPacket(0x07, 2))
+            .then(bytes => {
+                const mtu = (bytes[1] * 256) + bytes[0];
 
-            // Convert wire MTU into max size of data before SLIP encoding:
-            // This takes into account:
-            // - SLIP encoding ( /2 )
-            // - SLIP end separator ( -1 )
-            // - Serial DFU write command ( -1 )
-            this.mtu = Math.floor((mtu / 2) - 2);
+                // Convert wire MTU into max size of data before SLIP encoding:
+                // This takes into account:
+                // - SLIP encoding ( /2 )
+                // - SLIP end separator ( -1 )
+                // - Serial DFU write command ( -1 )
+                this.mtu = Math.floor((mtu / 2) - 2);
 
-            // Round down to multiples of 4.
-            // This is done to avoid errors while writing to flash memory:
-            // writing an unaligned number of bytes will result in an
-            // error in most chips.
-            this.mtu -= this.mtu % 4;
+                // Round down to multiples of 4.
+                // This is done to avoid errors while writing to flash memory:
+                // writing an unaligned number of bytes will result in an
+                // error in most chips.
+                this.mtu -= this.mtu % 4;
 
-            debug(`Serial wire MTU: ${mtu}; un-encoded data max size: ${this.mtu}`);
-        });
+                debug(`Serial wire MTU: ${mtu}; un-encoded data max size: ${this.mtu}`);
+            });
 
         return this.readyPromise;
     }
@@ -152,15 +150,15 @@ export default class DfuTransportSerial extends DfuTransportPrn {
         debug('GetProtocolVersion');
 
         return this.writeCommand(new Uint8Array([
-            0x00,  // "Version Command" opcode
+            0x00, // "Version Command" opcode
         ]))
-        .then(this.read.bind(this))
-        .then(this.assertPacket(0x00, 1))
-        .then(bytes => bytes[0])
-        .then(protocolVersion => {
-            debug('ProtocolVersion: ', protocolVersion);
-            return protocolVersion;
-        });
+            .then(this.read.bind(this))
+            .then(this.assertPacket(0x00, 1))
+            .then(bytes => bytes[0])
+            .then(protocolVersion => {
+                debug('ProtocolVersion: ', protocolVersion);
+                return protocolVersion;
+            });
     }
 
     // Returns a Promise to the version of the DFU protocol that the target implements, as
@@ -170,31 +168,31 @@ export default class DfuTransportSerial extends DfuTransportPrn {
         debug('GetHardwareVersionn');
 
         return this.writeCommand(new Uint8Array([
-            0x0A,  // "Version Command" opcode
+            0x0A, // "Version Command" opcode
         ]))
-        .then(this.read.bind(this))
-        .then(this.assertPacket(0x0A, 16))
-        .then(bytes => {
+            .then(this.read.bind(this))
+            .then(this.assertPacket(0x0A, 16))
+            .then(bytes => {
             // Decode little-endian fields, by using a DataView with the
             // same buffer *and* offset than the Uint8Array for the packet payload
-            const dataView = new DataView(bytes.buffer, bytes.byteOffset);
-            return {
-                part: dataView.getInt32(0, true),
-                variant: dataView.getInt32(4, true),
-                memory: {
-                    romSize: dataView.getInt32(8, true),
-                    ramSize: dataView.getInt32(12, true),
-                },
-            };
-        })
-        .then(hwVersion => {
-            debug('HardwareVersion part: ', hwVersion.part.toString(16));
-            debug('HardwareVersion variant: ', hwVersion.variant.toString(16));
-            debug('HardwareVersion ROM: ', hwVersion.memory.romSize);
-            debug('HardwareVersion RAM: ', hwVersion.memory.ramSize);
+                const dataView = new DataView(bytes.buffer, bytes.byteOffset);
+                return {
+                    part: dataView.getInt32(0, true),
+                    variant: dataView.getInt32(4, true),
+                    memory: {
+                        romSize: dataView.getInt32(8, true),
+                        ramSize: dataView.getInt32(12, true),
+                    },
+                };
+            })
+            .then(hwVersion => {
+                debug('HardwareVersion part: ', hwVersion.part.toString(16));
+                debug('HardwareVersion variant: ', hwVersion.variant.toString(16));
+                debug('HardwareVersion ROM: ', hwVersion.memory.romSize);
+                debug('HardwareVersion RAM: ', hwVersion.memory.ramSize);
 
-            return hwVersion;
-        });
+                return hwVersion;
+            });
     }
 
     // Given an image number (0-indexed), returns a Promise to a plain object describing
@@ -204,62 +202,62 @@ export default class DfuTransportSerial extends DfuTransportPrn {
         debug('GetFirmwareVersion');
 
         return this.writeCommand(new Uint8Array([
-            0x0B,  // "Version Command" opcode
+            0x0B, // "Version Command" opcode
             `0x${imageCount.toString(16)}`,
         ]))
-        .then(this.read.bind(this))
-        .then(this.assertPacket(0x0B, 13))
-        .then(bytes => {
+            .then(this.read.bind(this))
+            .then(this.assertPacket(0x0B, 13))
+            .then(bytes => {
             // Decode little-endian fields, by using a DataView with the
             // same buffer *and* offset than the Uint8Array for the packet payload
-            const dataView = new DataView(bytes.buffer, bytes.byteOffset);
-            let imgType = dataView.getUint8(0, true);
+                const dataView = new DataView(bytes.buffer, bytes.byteOffset);
+                let imgType = dataView.getUint8(0, true);
 
-            switch (imgType) {
-                case 0xFF:
+                switch (imgType) {
+                    case 0xFF:
                     // Meaning "no image at this index"
-                    return false;
-                case 0:
-                    imgType = 'SoftDevice';
-                    break;
-                case 1:
-                    imgType = 'Application';
-                    break;
-                case 2:
-                    imgType = 'Bootloader';
-                    break;
-                default:
-                    throw new Error('Unkown firmware image type');
-            }
+                        return false;
+                    case 0:
+                        imgType = 'SoftDevice';
+                        break;
+                    case 1:
+                        imgType = 'Application';
+                        break;
+                    case 2:
+                        imgType = 'Bootloader';
+                        break;
+                    default:
+                        throw new Error('Unkown firmware image type');
+                }
 
-            return {
-                version: dataView.getUint32(1, true),
-                addr: dataView.getUint32(5, true),
-                length: dataView.getUint32(9, true),
-                imageType: imgType,
-            };
-        })
-        .then(fwVersion => {
-            if (fwVersion) {
-                debug(`FirmwareVersion: image ${imageCount} is ${fwVersion.imageType} @0x${fwVersion.addr.toString(16)}+0x${fwVersion.length}`);
-            } else {
-                debug('FirmwareVersion: no more images.');
-            }
+                return {
+                    version: dataView.getUint32(1, true),
+                    addr: dataView.getUint32(5, true),
+                    length: dataView.getUint32(9, true),
+                    imageType: imgType,
+                };
+            })
+            .then(fwVersion => {
+                if (fwVersion) {
+                    debug(`FirmwareVersion: image ${imageCount} is ${fwVersion.imageType} @0x${fwVersion.addr.toString(16)}+0x${fwVersion.length}`);
+                } else {
+                    debug('FirmwareVersion: no more images.');
+                }
 
-            return fwVersion;
-        });
+                return fwVersion;
+            });
     }
 
     // Returns an array containing information about all available firmware images, by
     // sending several GetFirmwareVersion commands.
     getAllFirmwareVersions(index = 0, accum = []) {
         return this.getFirmwareVersion(index)
-        .then(imageInfo => {
-            if (imageInfo) {
-                accum.push(imageInfo);
-                return this.getAllFirmwareVersions(index + 1, accum);
-            }
-            return accum;
-        });
+            .then(imageInfo => {
+                if (imageInfo) {
+                    accum.push(imageInfo);
+                    return this.getAllFirmwareVersions(index + 1, accum);
+                }
+                return accum;
+            });
     }
 }

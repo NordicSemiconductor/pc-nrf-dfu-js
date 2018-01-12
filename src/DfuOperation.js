@@ -17,14 +17,13 @@
  * a USB interface of a USB device.
  */
 export default class DfuOperation {
-
     constructor(dfuUpdates, dfuTransport, autoStart = false) {
         this.updates = dfuUpdates.updates;
         // this.updatesPerformed = 0;
         this.transport = dfuTransport;
 
-//         let totalSize = this.updates.reduce((update)=>)
-//         this.progressCounter = new ProgressCounter(totalSize);
+        //         let totalSize = this.updates.reduce((update)=>)
+        //         this.progressCounter = new ProgressCounter(totalSize);
 
         if (autoStart) {
             this.start();
@@ -75,10 +74,8 @@ export default class DfuOperation {
         }
 
         return start
-        .then(() => this.transport.sendInitPacket(this.updates[updateNumber].initPacket))
-        .then(() => this.transport.sendFirmwareImage(this.updates[updateNumber].firmwareImage))
-        .then(() => this.performNextUpdate(updateNumber + 1, forceful));
+            .then(() => this.transport.sendInitPacket(this.updates[updateNumber].initPacket))
+            .then(() => this.transport.sendFirmwareImage(this.updates[updateNumber].firmwareImage))
+            .then(() => this.performNextUpdate(updateNumber + 1, forceful));
     }
-
-
 }

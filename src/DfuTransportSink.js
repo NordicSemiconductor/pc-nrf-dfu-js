@@ -72,7 +72,7 @@ export default class DfuTransportSink extends DfuAbstractTransport {
     }
 
     selectObject(type) {
-        if (!this.offsets.hasOwnProperty(type)) {
+        if (!Object.prototype.hasOwnProperty.call(this.offsets, type)) {
             throw new Error('Tried to select invalid payload type. Valid types are 0x01 and 0x02.');
         }
         this.selected = type;

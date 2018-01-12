@@ -77,12 +77,12 @@ export default class DfuAbstractTransport {
                         debug('Edge case: payload transferred up to page boundary; previous execute command might have been lost, re-sending.');
 
                         return this.executeObject(type, chunkSize)
-                        .then(() => this.sendPayload(type, bytes, true));
+                            .then(() => this.sendPayload(type, bytes, true));
 
                         // Recreate the page (possibly rolling back one page worth of data),
                         // restart the resume logic from a known state.
-//                         return this.createObject(type, chunkSize)
-//                         .then(()=>this.sendPayload(type, bytes, true));
+                        //                         return this.createObject(type, chunkSize)
+                        //                         .then(()=>this.sendPayload(type, bytes, true));
                     }
                     debug(`Payload partially transferred sucessfully, continuing from offset ${offset}.`);
 
@@ -90,7 +90,8 @@ export default class DfuAbstractTransport {
                     const end = (offset + chunkSize) - (offset % chunkSize);
 
                     return this.sendAndExecutePayloadChunk(
-                        type, bytes, offset, end, chunkSize, crc,
+                        type, bytes, offset,
+                        end, chunkSize, crc
                     );
                 }
                 // Note that these are CRC mismatches at a chunk level, not at a
@@ -100,12 +101,12 @@ export default class DfuAbstractTransport {
                 // continue an interrupted DFU, and the behaviour in this case is to panic.
                 debug(`CRC mismatch: expected/actual 0x${crc.toString(16)}/0x${crcSoFar.toString(16)}`);
 
-                return Promise.reject('A previous DFU process was interrupted, and it was left in such a state that cannot be continued. Please perform a DFU procedure disabling continuation.');
+                return Promise.reject(new Error('A previous DFU process was interrupted, and it was left in such a state that cannot be continued. Please perform a DFU procedure disabling continuation.'));
             }
             const end = Math.min(bytes.length, chunkSize);
 
             return this.createObject(type, end)
-            .then(() => this.sendAndExecutePayloadChunk(type, bytes, 0, end, chunkSize));
+                .then(() => this.sendAndExecutePayloadChunk(type, bytes, 0, end, chunkSize));
         });
     }
 
@@ -118,23 +119,22 @@ export default class DfuAbstractTransport {
     // - Execute the payload chunk (target might write a flash page)
     sendAndExecutePayloadChunk(type, bytes, start, end, chunkSize, crcSoFar = undefined) {
         return this.sendPayloadChunk(type, bytes, start, end, chunkSize, crcSoFar)
-//         .then(()=>new Promise(res=>{setTimeout(res, 5100);}))    // Synthetic timeout for debugging
-        .then(() => this.executeObject())
-//         .then(()=>new Promise(res=>{setTimeout(res, 5100);}))    // Synthetic timeout for debugging
-        .then(() => {
-            if (end >= bytes.length) {
-                debug(`Sent ${end} bytes, this payload type is finished`);
-                return Promise.resolve();
-            }
-            // Send next chunk
-            debug(`Sent ${end} bytes, not finished yet (until ${bytes.length})`);
-            const nextEnd = Math.min(bytes.length, end + chunkSize);
+            .then(() => this.executeObject())
+            .then(() => {
+                if (end >= bytes.length) {
+                    debug(`Sent ${end} bytes, this payload type is finished`);
+                    return Promise.resolve();
+                }
+                // Send next chunk
+                debug(`Sent ${end} bytes, not finished yet (until ${bytes.length})`);
+                const nextEnd = Math.min(bytes.length, end + chunkSize);
 
-            return this.createObject(type, nextEnd - end)
-            .then(() => this.sendAndExecutePayloadChunk(
-                type, bytes, end, nextEnd, chunkSize, crc32(bytes.subarray(0, end)),
-            ));
-        });
+                return this.createObject(type, nextEnd - end)
+                    .then(() => this.sendAndExecutePayloadChunk(
+                        type, bytes, end, nextEnd, chunkSize,
+                        crc32(bytes.subarray(0, end))
+                    ));
+            });
     }
 
     // Sends one payload chunk, retrying if necessary.
@@ -147,50 +147,55 @@ export default class DfuAbstractTransport {
         const crcAtChunkEnd = crc32(subarray, crcSoFar);
 
         return this.writeObject(subarray, crcSoFar, start)
-        .then(() => {
-            debug('Payload type fully transferred, requesting explicit checksum');
-            return this.crcObject(end, crcAtChunkEnd);
-        })
-        .then(([offset, crc]) => {
-            if (offset !== end) {
-                throw new Error(`Expected ${end} bytes to have been sent, actual is ${offset} bytes.`);
-            }
+            .then(() => {
+                debug('Payload type fully transferred, requesting explicit checksum');
+                return this.crcObject(end, crcAtChunkEnd);
+            })
+            .then(([offset, crc]) => {
+                if (offset !== end) {
+                    throw new Error(`Expected ${end} bytes to have been sent, actual is ${offset} bytes.`);
+                }
 
-//             if (Math.random() < 0.35) {
-//                 debug('DEBUG: faking CRC check failure at chunk end');
-//                 throw new Error(`Faking CRC error at ${end} bytes.`);
-//             }
+                //             if (Math.random() < 0.35) {
+                //                 debug('DEBUG: faking CRC check failure at chunk end');
+                //                 throw new Error(`Faking CRC error at ${end} bytes.`);
+                //             }
 
-            if (crcAtChunkEnd !== crc) {
-                throw new Error(`CRC mismatch after ${end} bytes have been sent: expected ${crcAtChunkEnd}, got ${crc}.`);
-            } else {
-                debug(`Explicit checksum OK at ${end} bytes`);
-            }
-        })
-        .catch(err => {
-            if (retries >= 5) {
-                return Promise.reject(`Too many write failures. Last failure: ${err}`);
-            }
-            debug(`Chunk write failed (${err}) Re-sending the whole chunk starting at ${start}. Times retried: ${retries}`);
-//             throw err;
+                if (crcAtChunkEnd !== crc) {
+                    throw new Error(`CRC mismatch after ${end} bytes have been sent: expected ${crcAtChunkEnd}, got ${crc}.`);
+                } else {
+                    debug(`Explicit checksum OK at ${end} bytes`);
+                }
+            })
+            .catch(err => {
+                if (retries >= 5) {
+                    return Promise.reject(new Error(`Too many write failures. Last failure: ${err}`));
+                }
+                debug(`Chunk write failed (${err}) Re-sending the whole chunk starting at ${start}. Times retried: ${retries}`);
+                //             throw err;
 
-            // FIXME: Instead of re-creating the whole chunk, select the payload
-            // type again and check the CRC so far.
+                // FIXME: Instead of re-creating the whole chunk, select the payload
+                // type again and check the CRC so far.
 
-            const newStart = start - (start % chunkSize);
-            // Rewind to the start of the block
-            const rewoundCrc = newStart === 0 ? undefined : crc32(bytes.subarray(0, newStart));
+                const newStart = start - (start % chunkSize);
+                // Rewind to the start of the block
+                const rewoundCrc = newStart === 0 ? undefined : crc32(bytes.subarray(0, newStart));
 
-            return this.createObject(type, end - start)
-            .then(() => this.sendPayloadChunk(
-                type, bytes, newStart, end, chunkSize, rewoundCrc, retries + 1,
-            ));
-        });
+                return this.createObject(type, end - start)
+                    .then(() => this.sendPayloadChunk(
+                        type, bytes, newStart, end,
+                        chunkSize, rewoundCrc, retries + 1
+                    ));
+            });
     }
 
 
     // The following 5 methods have a 1-to-1 mapping to the 5 DFU requests
     // documented at http://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.sdk5.v14.0.0%2Flib_dfu_transport.html
+    // These are meant as abstract methods, meaning they do nothing and subclasses
+    // must provide an implementation.
+
+    /* eslint-disable class-methods-use-this, no-unused-vars */
 
     // Allocate space for a new payload chunk. Resets the progress
     // since the last Execute command, and selects the newly created object.
@@ -228,4 +233,5 @@ export default class DfuAbstractTransport {
     // Actual implementation must be provided by concrete subclasses of DfuAbstractTransport.
     selectObject(type) {}
 
+    /* eslint-enable class-methods-use-this, no-unused-vars */
 }
