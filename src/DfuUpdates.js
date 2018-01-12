@@ -86,12 +86,12 @@ export default class DfuUpdates {
      */
     static fromZipFile(zipBytes) {
         return (new JSZip()).loadAsync(zipBytes)
-        .then(zippedFiles =>
-            zippedFiles.file('manifest.json').async('text').then(manifestString => {
-                debug('Unzipped manifest: ', manifestString);
+            .then(zippedFiles =>
+                zippedFiles.file('manifest.json').async('text').then(manifestString => {
+                    debug('Unzipped manifest: ', manifestString);
 
-                return JSON.parse(manifestString).manifest;
-            }).then(manifestJson => {
+                    return JSON.parse(manifestString).manifest;
+                }).then(manifestJson => {
                 // The manifest should have up to 2 properties along
                 // "softdevice", "bootloader", "softdevice_bootloader",
                 // or "application". At least that's what the standard
@@ -99,22 +99,21 @@ export default class DfuUpdates {
                 // from creating more init packets (with more protobuf defs)
                 // and more types of payload. So we don't check for this.
 
-                debug('Parsed manifest:', manifestJson);
+                    debug('Parsed manifest:', manifestJson);
 
-                const updates = Object.entries(manifestJson).map(([, updateJson]) => {
-                    const { dat_file, bin_file } = updateJson;
-                    const initPacketPromise = zippedFiles.file(dat_file).async('uint8array');
-                    const firmwareImagePromise = zippedFiles.file(bin_file).async('uint8array');
+                    const updates = Object.entries(manifestJson).map(([, updateJson]) => {
+                        const initPacketPromise = zippedFiles.file(updateJson.dat_file).async('uint8array');
+                        const firmwareImagePromise = zippedFiles.file(updateJson.bin_file).async('uint8array');
 
-                    return Promise.all([initPacketPromise, firmwareImagePromise])
-                        .then(([initPacketBytes, firmwareImageBytes]) => ({
-                            initPacket: initPacketBytes,
-                            firmwareImage: firmwareImageBytes,
-                        }));
-                });
+                        return Promise.all([initPacketPromise, firmwareImagePromise])
+                            .then(([initPacketBytes, firmwareImageBytes]) => ({
+                                initPacket: initPacketBytes,
+                                firmwareImage: firmwareImageBytes,
+                            }));
+                    });
 
-                return Promise.all(updates)
-                .then(resolvedUpdates => new DfuUpdates(resolvedUpdates));
-            }));
+                    return Promise.all(updates)
+                        .then(resolvedUpdates => new DfuUpdates(resolvedUpdates));
+                }));
     }
 }

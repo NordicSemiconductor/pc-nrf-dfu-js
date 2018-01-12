@@ -37,6 +37,13 @@
         "import/extensions": ["off"],
         "no-undef": 1,
         "no-unused-vars": 1,
+        "comma-dangle": ["error", {
+            "arrays": "always-multiline",
+            "objects": "always-multiline",
+            "imports": "always-multiline",
+            "exports": "always-multiline",
+            "functions": "ignore",
+        }]
     },
     "plugins": [
         "import"

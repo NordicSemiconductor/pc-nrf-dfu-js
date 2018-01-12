@@ -6,11 +6,10 @@
  */
 
 export default class ProgressCounter {
-
     constructor(targetAmount) {
         this.target = targetAmount;
-//         this._startTime = performance.now(); /// TODO: properly use timings
-//         this._lastTime = performance.now();
+        //         this._startTime = performance.now(); /// TODO: properly use timings
+        //         this._lastTime = performance.now();
         this.current = 0;
 
         this.waits = [];
