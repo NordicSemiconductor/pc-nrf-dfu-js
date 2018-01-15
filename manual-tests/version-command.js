@@ -16,8 +16,9 @@ SerialPort.list().then(ports => {
     });
     console.log('Scanned');
     const filteredPorts = ports.filter(port => (
-        (port.vendorId === '1915' && port.productId === '521F') || // NordicSemi default USB SDFU, win
-        (port.vendorId === '1915' && port.productId === 'nRF52 USB SDFU') // NordicSemi default USB SDFU, linux
+        (port.vendorId === '1915' && port.productId === '521F') ||              // NordicSemi default USB SDFU, Windows
+        (port.vendorId === '1915' && port.productId === 'nRF52 USB SDFU') ||    // NordicSemi default USB SDFU, Linux
+        (port.vendorId === '1915' && port.productId === '521f')                 // NordicSemi default USB SDFU, MacOS
     ));
 
     if (filteredPorts && filteredPorts[0]) {
