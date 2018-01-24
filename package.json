@@ -8,7 +8,6 @@
   "browser": "dist/nrf-dfu.browser.js",
   "author": "Iván Sánchez Ortega <ivan@sanchezortega.es>",
   "license": "Propietary",
-  "private": true,
   "scripts": {
     "rollup": "rollup -c rollup.config.js",
     "test": "rollup -c rollup.config.js; jasmine",
