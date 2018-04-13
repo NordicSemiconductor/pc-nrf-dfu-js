@@ -35,11 +35,10 @@ export default class DfuTransportSlowSerial extends DfuTransportSerial {
             return this.readyPromise;
         }
 
-        return super.ready().then(() => { 
+        return super.ready().then(() => {
             const mtu = Math.min(this.mtu, this.maxMtu);
             debug(`Hijacking MTU value, now: ${mtu}`);
-            this.mtu = mtu; 
+            this.mtu = mtu;
         });
     }
 }
-
