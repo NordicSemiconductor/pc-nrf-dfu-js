@@ -1,6 +1,6 @@
 {
   "name": "pc-nrf-dfu-js",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "JS implementation of the nRF DFU protocol",
   "esnext:main": "src/index.js",
   "main": "dist/nrf-dfu.cjs.js",
@@ -10,7 +10,7 @@
   "license": "Propietary",
   "scripts": {
     "rollup": "rollup -c rollup.config.js",
-    "test": "rollup -c rollup.config.js; jasmine",
+    "test": "rollup -c rollup.config.js && jasmine",
     "lint": "eslint src/"
   },
   "dependencies": {

@@ -175,7 +175,7 @@ export default class DfuTransportSerial extends DfuTransportPrn {
             0x0A, // "Version Command" opcode
         ]))
             .then(this.read.bind(this))
-            .then(this.assertPacket(0x0A, 16))
+            .then(this.assertPacket(0x0A, 20))
             .then(bytes => {
             // Decode little-endian fields, by using a DataView with the
             // same buffer *and* offset than the Uint8Array for the packet payload
@@ -186,6 +186,7 @@ export default class DfuTransportSerial extends DfuTransportPrn {
                     memory: {
                         romSize: dataView.getInt32(8, true),
                         ramSize: dataView.getInt32(12, true),
+                        romPageSize: dataView.getInt32(16, true),
                     },
                 };
             })
@@ -194,6 +195,7 @@ export default class DfuTransportSerial extends DfuTransportPrn {
                 debug('HardwareVersion variant: ', hwVersion.variant.toString(16));
                 debug('HardwareVersion ROM: ', hwVersion.memory.romSize);
                 debug('HardwareVersion RAM: ', hwVersion.memory.ramSize);
+                debug('HardwareVersion ROM page size: ', hwVersion.memory.romPageSize);
 
                 return hwVersion;
             });
