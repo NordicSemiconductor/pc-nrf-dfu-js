@@ -1,4 +1,4 @@
-import * as slip from 'slip';
+import * as slip from './util/slip';
 
 import DfuTransportPrn from './DfuTransportPrn';
 

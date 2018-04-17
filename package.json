@@ -14,9 +14,7 @@
     "lint": "eslint src/"
   },
   "dependencies": {
-    "crc": "git+https://github.com/IvanSanchez/node-crc.git#no-buffer",
-    "jszip": "^3.1.4",
-    "slip": "git+https://github.com/IvanSanchez/slip.js.git"
+    "jszip": "^3.1.4"
   },
   "devDependencies": {
     "debug": "^3.1.0",

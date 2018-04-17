@@ -1,5 +1,5 @@
 // FIXME: Should be `import {crc32} from 'crc'`, https://github.com/alexgorbatchev/node-crc/pull/50
-import crc32 from 'crc/src/crc32';
+import crc32 from './util/crc32';
 
 import DfuAbstractTransport from './DfuAbstractTransport';
 import { errorMessages, extendedErrorMessages } from './DfuErrorConstants';
