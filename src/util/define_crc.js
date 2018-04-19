@@ -47,7 +47,7 @@ if (typeof Uint8Array !== 'undefined' && Uint8Array.from &&
         : (arr => (Buffer.isBuffer(arr) ? arr : new Buffer(arr)));
 }
 
-export default function (model, calc) {
+export default function defineCrc(model, calc) {
     // eslint-disable-next-line no-bitwise
     const fn = (buf, previous) => calc(castToBytes(buf), previous) >>> 0;
     fn.signed = calc;
