@@ -189,13 +189,23 @@ export default class DfuAbstractTransport {
             });
     }
 
+    /* eslint-disable class-methods-use-this, no-unused-vars */
+
+    // Waits until the connection is closed by the target. This is typically needed after
+    // performing a DFU to make sure that the DFU operation is fully complete. If not, the
+    // DFU operation will resolve prematurely, and the consumer may try to interact with
+    // the target while it is still in DFU mode.
+    // Actual implementation *may* be provided by concrete subclasses of DfuAbstractTransport
+    // if the transport requires this behavior. Must return a Promise.
+    waitForClose() {
+        return Promise.resolve();
+    }
+
 
     // The following 5 methods have a 1-to-1 mapping to the 5 DFU requests
     // documented at http://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.sdk5.v14.0.0%2Flib_dfu_transport.html
     // These are meant as abstract methods, meaning they do nothing and subclasses
     // must provide an implementation.
-
-    /* eslint-disable class-methods-use-this, no-unused-vars */
 
     // Allocate space for a new payload chunk. Resets the progress
     // since the last Execute command, and selects the newly created object.

@@ -53,13 +53,12 @@ export default class DfuTransportSerial extends DfuTransportPrn {
     // Opens the port, sets up the event handlers and logging.
     // Returns a Promise when opening is done.
     open() {
-        if (this.openPromise) {
-            return this.openPromise;
+        if (this.port.isOpen) {
+            return Promise.resolve();
         }
 
-        this.openPromise = new Promise((res, rej) => {
+        return new Promise((res, rej) => {
             debug('Opening serial port.');
-
 
             this.port.open(err => {
                 if (err) {
@@ -79,7 +78,32 @@ export default class DfuTransportSerial extends DfuTransportPrn {
                 return res();
             });
         });
-        return this.openPromise;
+    }
+
+    // Waits for the port to be closed by the target. Times out if not
+    // closed after 5000 ms.
+    waitForClose() {
+        if (!this.port.isOpen) {
+            debug('Port is already closed.');
+            return Promise.resolve();
+        }
+
+        debug('Waiting until the port is closed by the target...');
+        let timeout;
+        return Promise.race([
+            new Promise(res => {
+                this.port.once('close', () => {
+                    debug('Port was closed by the target, as expected.');
+                    clearTimeout(timeout);
+                    res();
+                });
+            }),
+            new Promise((_, rej) => {
+                timeout = setTimeout(() => {
+                    rej(new Error('Timeout while waiting for serial port to be closed by DFU target.'));
+                }, 5000);
+            }),
+        ]);
     }
 
     // Callback when raw (yet undecoded by SLIP) data is being read from the serial port instance.
