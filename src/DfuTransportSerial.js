@@ -6,7 +6,10 @@ const debug = require('debug')('dfu:serial');
 
 
 /**
- * Serial DFU transport.
+ * Serial DFU transport. Supports serial DFU for devices connected
+ * through a SEGGER J-Link debugger. See DfuTransportUsbSerial for
+ * support for Nordic USB devices without the J-Link debugger.
+ *
  * This needs to be given a `serialport` instance when instantiating.
  * Will encode actual requests with SLIP
  */
