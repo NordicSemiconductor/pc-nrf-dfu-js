@@ -56,11 +56,11 @@ export default class DfuTransportSerial extends DfuTransportPrn {
     // Opens the port, sets up the event handlers and logging.
     // Returns a Promise when opening is done.
     open() {
-        if (this.openPromise) {
-            return this.openPromise;
+        if (this.port && this.port.isOpen) {
+            return Promise.resolve();
         }
 
-        this.openPromise = new Promise((res, rej) => {
+        return new Promise((res, rej) => {
             debug('Opening serial port.');
 
 
@@ -82,7 +82,6 @@ export default class DfuTransportSerial extends DfuTransportPrn {
                 return res();
             });
         });
-        return this.openPromise;
     }
 
     // Callback when raw (yet undecoded by SLIP) data is being read from the serial port instance.
