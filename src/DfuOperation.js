@@ -63,7 +63,7 @@ export default class DfuOperation {
     // - Proceed to the next update
     performNextUpdate(updateNumber, forceful) {
         if (this.updates.length <= updateNumber) {
-            return Promise.resolve();
+            return this.transport.waitForClose();
         }
 
         let start;
