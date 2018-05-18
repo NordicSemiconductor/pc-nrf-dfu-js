@@ -17,7 +17,7 @@
     "jszip": "^3.1.4"
   },
   "peerDependencies": {
-    "serialport": "^6.0.0"
+    "serialport": "^6.2.0"
   },
   "devDependencies": {
     "debug": "^3.1.0",
@@ -32,6 +32,6 @@
     "rollup-plugin-node-builtins": "^2.1.2",
     "rollup-plugin-node-globals": "^1.1.0",
     "rollup-plugin-node-resolve": "^3.0.0",
-    "serialport": "^6.0.0"
+    "serialport": "^6.2.0"
   }
 }
