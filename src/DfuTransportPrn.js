@@ -156,7 +156,7 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
         }
 
         debug(errorStr);
-        return Promise.reject(errorStr);
+        return Promise.reject(new Error(errorStr));
     }
 
 
