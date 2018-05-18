@@ -1,4 +1,4 @@
-import * as slip from 'slip';
+import * as slip from './util/slip';
 
 import DfuTransportPrn from './DfuTransportPrn';
 
@@ -6,7 +6,10 @@ const debug = require('debug')('dfu:serial');
 
 
 /**
- * Serial DFU transport.
+ * Serial DFU transport. Supports serial DFU for devices connected
+ * through a SEGGER J-Link debugger. See DfuTransportUsbSerial for
+ * support for Nordic USB devices without the J-Link debugger.
+ *
  * This needs to be given a `serialport` instance when instantiating.
  * Will encode actual requests with SLIP
  */
@@ -59,11 +62,11 @@ export default class DfuTransportSerial extends DfuTransportPrn {
     // Opens the port, sets up the event handlers and logging.
     // Returns a Promise when opening is done.
     open() {
-        if (this.openPromise) {
-            return this.openPromise;
+        if (this.port && this.port.isOpen) {
+            return Promise.resolve();
         }
 
-        this.openPromise = new Promise((res, rej) => {
+        return new Promise((res, rej) => {
             debug('Opening serial port.');
 
 
@@ -85,7 +88,6 @@ export default class DfuTransportSerial extends DfuTransportPrn {
                 return res();
             });
         });
-        return this.openPromise;
     }
 
     // Callback when raw (yet undecoded by SLIP) data is being read from the serial port instance.
@@ -181,7 +183,7 @@ export default class DfuTransportSerial extends DfuTransportPrn {
             0x0A, // "Version Command" opcode
         ]))
             .then(this.read.bind(this))
-            .then(this.assertPacket(0x0A, 16))
+            .then(this.assertPacket(0x0A, 20))
             .then(bytes => {
             // Decode little-endian fields, by using a DataView with the
             // same buffer *and* offset than the Uint8Array for the packet payload
@@ -192,6 +194,7 @@ export default class DfuTransportSerial extends DfuTransportPrn {
                     memory: {
                         romSize: dataView.getInt32(8, true),
                         ramSize: dataView.getInt32(12, true),
+                        romPageSize: dataView.getInt32(16, true),
                     },
                 };
             })
@@ -200,6 +203,7 @@ export default class DfuTransportSerial extends DfuTransportPrn {
                 debug('HardwareVersion variant: ', hwVersion.variant.toString(16));
                 debug('HardwareVersion ROM: ', hwVersion.memory.romSize);
                 debug('HardwareVersion RAM: ', hwVersion.memory.ramSize);
+                debug('HardwareVersion ROM page size: ', hwVersion.memory.romPageSize);
 
                 return hwVersion;
             });

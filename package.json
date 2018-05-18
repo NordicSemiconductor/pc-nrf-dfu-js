@@ -10,14 +10,13 @@
   "license": "Propietary",
   "scripts": {
     "rollup": "rollup -c rollup.config.js",
-    "test": "rollup -c rollup.config.js; jasmine",
+    "test": "rollup -c rollup.config.js && jasmine",
     "lint": "eslint src/"
   },
   "dependencies": {
-    "crc": "git+https://github.com/IvanSanchez/node-crc.git#no-buffer",
-    "jszip": "^3.1.4",
-    "slip": "git+https://github.com/IvanSanchez/slip.js.git"
-  }, "peerDependencies": {
+    "jszip": "^3.1.4"
+  },
+  "peerDependencies": {
     "serialport": "^6.0.0"
   },
   "devDependencies": {
