@@ -28,8 +28,8 @@ export const errorMessages = {
 // Error messages for the known extended error codes.
 // See http://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.sdk5.v14.2.0%2Fgroup__sdk__nrf__dfu__transport.html
 export const extendedErrorMessages = {
-    0x00: 'An error happened, but it\'s extended error code hasn\'t been set.',
-    0x01: 'An error happened, but it\'s extended error code is incorrect.',
+    0x00: 'An error happened, but its extended error code hasn\'t been set.',
+    0x01: 'An error happened, but its extended error code is incorrect.',
 
     // Extended 0x02 should never happen, because responses 0x02 and 0x03
     // should cover all possible incorrect inputs
