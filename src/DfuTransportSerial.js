@@ -36,11 +36,17 @@ export default class DfuTransportSerial extends DfuTransportPrn {
         // Cast the Uint8Array info a Buffer so it works on nodejs v6
         encoded = Buffer.from(encoded);
 
-        return this.open().then(() =>
+        return this.open().then(() => (
             new Promise(res => {
+                const drained = this.port.write(encoded);
                 debug(' send --> ', encoded);
-                this.port.write(encoded, res);
-            }));
+                if (drained) {
+                    res();
+                } else {
+                    this.port.once('drained', res);
+                }
+            })
+        ));
     }
 
     // Given some payload bytes, pack them into a 0x08 command.

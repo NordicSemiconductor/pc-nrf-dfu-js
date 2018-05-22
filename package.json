@@ -1,6 +1,6 @@
 {
   "name": "pc-nrf-dfu-js",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "JS implementation of the nRF DFU protocol",
   "esnext:main": "src/index.js",
   "main": "dist/nrf-dfu.cjs.js",
@@ -16,6 +16,9 @@
   "dependencies": {
     "jszip": "^3.1.4"
   },
+  "peerDependencies": {
+    "serialport": "^6.2.0"
+  },
   "devDependencies": {
     "debug": "^3.1.0",
     "eslint": "^4.15.0",
@@ -29,6 +32,6 @@
     "rollup-plugin-node-builtins": "^2.1.2",
     "rollup-plugin-node-globals": "^1.1.0",
     "rollup-plugin-node-resolve": "^3.0.0",
-    "serialport": "^5.0.0"
+    "serialport": "^6.2.0"
   }
 }
