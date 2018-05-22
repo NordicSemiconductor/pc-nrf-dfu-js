@@ -48,7 +48,7 @@ export default class DfuTransportUsbSerial extends DfuTransportSerial {
                         if (port) {
                             debug(`Found port ${port.comName} with serial number ${this.serialNumber}`);
                             res(port);
-                        } else if (retryCount < 10) {
+                        } else if (retryCount < 50) {
                             retryCount += 1;
                             debug(`No port with serial number ${this.serialNumber} found. Retrying...`);
                             setTimeout(tryFindPort, retryDelay);
