@@ -83,17 +83,31 @@ export default class DfuTransportUsbSerial extends DfuTransportSerial {
         }
 
         debug('Waiting until the port is closed by the target...');
+
+        // Some platforms have faulty implementations of serial-over-USB
+        // drivers, so the `close` event might not be fired when the USB
+        // device is disconnected, only when actively sending/receiving data.
+        // Thw workaround here is to send CRC requests (which will not
+        // modify the state of the DFU bootloader if it still hasn't rebooted/detached).
+        // See https://github.com/node-serialport/node-serialport/issues/1334#issuecomment-331442883
+        let interval = setInterval(()=>{
+            debug('Sending CRC request (and expecting it to fail and trigger a \'close\' event)');
+            this.crcObject();
+        }, 250);
+
         let timeout;
         return Promise.race([
             new Promise(res => {
                 this.port.once('close', () => {
                     debug('Port was closed by the target, as expected.');
                     clearTimeout(timeout);
+                    clearInterval(interval);
                     res();
                 });
             }),
             new Promise((_, rej) => {
                 timeout = setTimeout(() => {
+                    clearInterval(interval);
                     rej(new Error('Timeout while waiting for serial port to be closed by DFU target.'));
                 }, 5000);
             }),
