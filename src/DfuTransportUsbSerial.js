@@ -1,5 +1,6 @@
 import DfuTransportSerial from './DfuTransportSerial';
 
+const os = require('os');
 const debug = require('debug')('dfu:usbserial');
 const SerialPort = require('serialport');
 
@@ -80,6 +81,15 @@ export default class DfuTransportUsbSerial extends DfuTransportSerial {
         if (!this.port || !this.port.isOpen) {
             debug('Port is already closed.');
             return Promise.resolve();
+        }
+
+        // Close port on MacOS explicitly since MacOS does not close the port automatically.
+        if (os.platform() === 'darwin') {
+            return new Promise(resolve => {
+                this.port.close(() => {
+                    resolve();
+                });
+            });
         }
 
         debug('Waiting until the port is closed by the target...');
