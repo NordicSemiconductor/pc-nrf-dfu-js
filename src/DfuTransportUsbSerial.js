@@ -102,7 +102,14 @@ export default class DfuTransportUsbSerial extends DfuTransportSerial {
         // See https://github.com/node-serialport/node-serialport/issues/1334#issuecomment-331442883
         const interval = setInterval(() => {
             debug('Sending CRC request (and expecting it to fail and trigger a \'close\' event)');
-            this.crcObject();
+
+            // Using this.writeCommand instead of this.crcObject because this.crcObject
+            // will wait for a response. If the port is closed while waiting for a
+            // response, then the next DFU transfer (if any) will fail because the
+            // transport will keep waiting for a CRC response.
+            this.writeCommand(new Uint8Array([
+                0x03, // "CRC" opcode
+            ]));
         }, 250);
 
         let timeout;
