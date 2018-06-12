@@ -102,7 +102,7 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
                     if (this.waitingForPacket && this.waitingForPacket === res) {
                         delete this.waitingForPacket;
                     }
-                    rej(new Error('Timeout while reading from transport. Is the nRF in bootloader mode?'));
+                    rej(new Error('Timeout while reading from serial transport. See https://github.com/NordicSemiconductor/pc-nrfconnect-core/blob/master/doc/serial-timeout-troubleshoot.md'));
                 }, 5000);
             }),
         ]);
