@@ -87,7 +87,9 @@ export default class DfuTransportUsbSerial extends DfuTransportSerial {
         if (os.platform() === 'darwin') {
             return new Promise(resolve => {
                 this.port.close(() => {
-                    resolve();
+                    // resolve() must be delayed so macOS doesn't immediately
+                    // open the same device again which occurs when it is plugged in a hub.
+                    setTimeout(resolve, 1000);
                 });
             });
         }
