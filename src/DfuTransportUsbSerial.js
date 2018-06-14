@@ -111,7 +111,12 @@ export default class DfuTransportUsbSerial extends DfuTransportSerial {
             // transport will keep waiting for a CRC response.
             this.writeCommand(new Uint8Array([
                 0x03, // "CRC" opcode
-            ]));
+            ])).catch(err => {
+                // No-op in case of an (expected) error, makes this return a
+                // fulfilled promise instead of a rejected one.
+                // Some scenarios in a win7 platform trigger a "Error 1167" when
+                // attempting to write with the port closed.
+            });
         }, 250);
 
         let timeout;

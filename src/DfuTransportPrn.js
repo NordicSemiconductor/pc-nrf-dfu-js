@@ -92,20 +92,25 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
         }
 
         // Store the callback so it can be called as soon as the wire packet is
-        // ready. Add a 5sec timeout while we're at it.
-        return Promise.race([
-            new Promise(res => {
-                this.waitingForPacket = res;
-            }),
-            new Promise((res, rej) => {
-                setTimeout(() => {
-                    if (this.waitingForPacket && this.waitingForPacket === res) {
-                        delete this.waitingForPacket;
-                    }
-                    rej(new Error('Timeout while reading from transport. Is the nRF in bootloader mode?'));
-                }, 5000);
-            }),
-        ]);
+        // ready. Add a 5sec timeout while we're at it; remove that timeout
+        // when data is actually received.
+        return new Promise((res, rej) => {
+            let timeout;
+
+            const readCallback = (data => {
+                clearTimeout(timeout);
+                res(data);
+            });
+
+            timeout = setTimeout(() => {
+                if (this.waitingForPacket && this.waitingForPacket === readCallback) {
+                    delete this.waitingForPacket;
+                }
+                rej(new Error('Timeout while reading from serial transport. See https://github.com/NordicSemiconductor/pc-nrfconnect-core/blob/master/doc/serial-timeout-troubleshoot.md'));
+            }, 5000);
+
+            this.waitingForPacket = readCallback;
+        });
     }
 
     // Must be called when a (complete) packet/message is received, with the
