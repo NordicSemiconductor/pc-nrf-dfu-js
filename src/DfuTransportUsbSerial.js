@@ -1,6 +1,5 @@
 import DfuTransportSerial from './DfuTransportSerial';
 
-const os = require('os');
 const debug = require('debug')('dfu:usbserial');
 const SerialPort = require('serialport');
 
@@ -83,58 +82,14 @@ export default class DfuTransportUsbSerial extends DfuTransportSerial {
             return Promise.resolve();
         }
 
-        // Close port on MacOS explicitly since MacOS does not close the port automatically.
-        if (os.platform() === 'darwin') {
-            return new Promise(resolve => {
-                this.port.close(() => {
-                    // resolve() must be delayed so macOS doesn't immediately
-                    // open the same device again which occurs when it is plugged in a hub.
-                    setTimeout(resolve, 1000);
-                });
+        // Explicit close in all cases
+        return new Promise(resolve => {
+            this.port.close(() => {
+                // resolve() must be delayed so macOS doesn't immediately
+                // open the same device again which occurs when it is plugged in a hub,
+                // and win7-x64 might also have the chance to clean up.
+                setTimeout(resolve, 2000);
             });
-        }
-
-        debug('Waiting until the port is closed by the target...');
-
-        // Some platforms have faulty implementations of serial-over-USB
-        // drivers, so the `close` event might not be fired when the USB
-        // device is disconnected, only when actively sending/receiving data.
-        // The workaround here is to send CRC requests (which will not
-        // modify the state of the DFU bootloader if it still hasn't rebooted/detached).
-        // See https://github.com/node-serialport/node-serialport/issues/1334#issuecomment-331442883
-        const interval = setInterval(() => {
-            debug('Sending CRC request (and expecting it to fail and trigger a \'close\' event)');
-
-            // Using this.writeCommand instead of this.crcObject because this.crcObject
-            // will wait for a response. If the port is closed while waiting for a
-            // response, then the next DFU transfer (if any) will fail because the
-            // transport will keep waiting for a CRC response.
-            this.writeCommand(new Uint8Array([
-                0x03, // "CRC" opcode
-            ])).catch(err => {
-                // No-op in case of an (expected) error, makes this return a
-                // fulfilled promise instead of a rejected one.
-                // Some scenarios in a win7 platform trigger a "Error 1167" when
-                // attempting to write with the port closed.
-            });
-        }, 250);
-
-        let timeout;
-        return Promise.race([
-            new Promise(res => {
-                this.port.once('close', () => {
-                    debug('Port was closed by the target, as expected.');
-                    clearTimeout(timeout);
-                    clearInterval(interval);
-                    res();
-                });
-            }),
-            new Promise((_, rej) => {
-                timeout = setTimeout(() => {
-                    clearInterval(interval);
-                    rej(new Error('Timeout while waiting for serial port to be closed by DFU target.'));
-                }, 5000);
-            }),
-        ]);
+        });
     }
 }
