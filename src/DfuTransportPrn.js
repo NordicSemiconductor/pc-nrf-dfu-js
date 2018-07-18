@@ -323,4 +323,15 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
                     return [offset, crc, chunkSize];
                 }));
     }
+
+    abortObject() {
+        debug('Abort (mark payload chunk as ready)');
+        return this.ready().then(() =>
+            this.writeCommand(new Uint8Array([
+                0x0C, // "Abort" opcode
+            ]))
+                .then(this.read.bind(this))
+                .then(this.assertPacket(0x0C, 0)));
+
+    }
 }
