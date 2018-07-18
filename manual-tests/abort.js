@@ -4,17 +4,17 @@ const nrfDfu = require('../dist/nrf-dfu.cjs');
 
 const SerialPort = require('serialport');
 
-const debug = require('debug');
+const Debug = require('debug');
+debug = Debug('dfu:abort-test');
 
 // Enable logging from all DFU functionality (see https://github.com/visionmedia/debug#set-dynamically)
-debug.enable('*');
-
+Debug.enable('*');
 
 SerialPort.list().then(ports => {
     ports.forEach(port => {
-        console.log(`${port.vendorId}/${port.productId}`);
+        debug(`${port.vendorId}/${port.productId}`);
     });
-    console.log('Scanned');
+    debug('Scanned');
     const filteredPorts = ports.filter(port => (
         (port.vendorId === '1915' && port.productId === '521F') ||              // NordicSemi default USB SDFU, Windows
         (port.vendorId === '1915' && port.productId === 'nRF52 USB SDFU') ||    // NordicSemi default USB SDFU, Linux
@@ -22,7 +22,7 @@ SerialPort.list().then(ports => {
     ));
 
     if (filteredPorts && filteredPorts[0]) {
-        console.log(filteredPorts[0]);
+        debug(filteredPorts[0]);
         return new SerialPort(filteredPorts[0].comName, { baudRate: 115200, autoOpen: false });
     }
     throw new Error('No serial ports with a Segger are available');
@@ -31,9 +31,6 @@ SerialPort.list().then(ports => {
     const serialTransport = new nrfDfu.DfuTransportSerial(port, 0);
 
     serialTransport.abortObject()
-    .then(() => {
-        console.log('lala');
-    })
-    .then(() => port.close());
+        .then(() => port.close());
 })
-.catch(console.log);
+.catch(debug);
