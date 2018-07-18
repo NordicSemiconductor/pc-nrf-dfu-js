@@ -330,8 +330,7 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
             this.writeCommand(new Uint8Array([
                 0x0C, // "Abort" opcode
             ]))
-                .then(this.read.bind(this))
-                .then(this.assertPacket(0x0C, 0)));
+        );
 
     }
 }
