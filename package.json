@@ -1,6 +1,6 @@
 {
   "name": "pc-nrf-dfu-js",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "JS implementation of the nRF DFU protocol",
   "esnext:main": "src/index.js",
   "main": "dist/nrf-dfu.cjs.js",

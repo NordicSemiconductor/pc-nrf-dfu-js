@@ -34,6 +34,13 @@ export default class DfuAbstractTransport {
         return this.createObject(1, 0x10);
     }
 
+    // Abort the DFU procedure, which means exiting the bootloader mode
+    // and trying to switch back to the app mode
+    abort() {
+        debug('Exit Bootloader Mode');
+        return this.abortObject();
+    }
+
     // Given a Uint8Array, sends it as an init payload / "command object".
     // Returns a Promise.
     sendInitPacket(bytes) {
@@ -232,6 +239,9 @@ export default class DfuAbstractTransport {
     // Typically the chunk size will be the size of a page of flash memory.
     // Actual implementation must be provided by concrete subclasses of DfuAbstractTransport.
     selectObject(type) {}
+
+    // Abort bootloader mode and try to switch back to app mode
+    abortObject() {}
 
     /* eslint-enable class-methods-use-this, no-unused-vars */
 }
