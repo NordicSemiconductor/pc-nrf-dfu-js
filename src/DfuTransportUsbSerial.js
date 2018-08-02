@@ -1,4 +1,5 @@
 import DfuTransportSerial from './DfuTransportSerial';
+import DfuError from './DfuError';
 
 const debug = require('debug')('dfu:usbserial');
 const SerialPort = require('serialport');

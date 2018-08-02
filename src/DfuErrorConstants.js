@@ -1,3 +1,15 @@
+// Error types for errorMessages, responseErrorMessages and extendedErrorMessages
+export const errorType = {
+    0x00: 'Error message',
+    0x01: 'Error message for known response code',
+    0x02: 'Error message for known extended error code',
+}
+
+// Error messages for pc-nrf-dfu-js
+export const errorMessages = {
+
+}
+
 
 
 // Error messages for the known response codes.
@@ -5,7 +17,7 @@
 // as well as the response codes at
 // http://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.sdk5.v14.2.0%2Flib_dfu_transport_serial.html
 
-export const errorMessages = {
+export const responseErrorMessages = {
     0x00: 'Missing or malformed opcode',
     //  0x01: success
     0x02: 'Opcode unknown or not supported',
