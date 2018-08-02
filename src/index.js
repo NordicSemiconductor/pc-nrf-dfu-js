@@ -5,6 +5,7 @@ import DfuTransportSerial from './DfuTransportSerial';
 import DfuTransportSlowSerial from './DfuTransportSlowSerial';
 import DfuTransportUsbSerial from './DfuTransportUsbSerial';
 import DfuTransportNoble from './DfuTransportNoble';
+import DfuError from './DfuError';
 import ProgressCounter from './ProgressCounter';
 
 export {
@@ -15,5 +16,6 @@ export {
     DfuTransportUsbSerial,
     DfuTransportSlowSerial,
     DfuTransportNoble,
+    DfuError,
     ProgressCounter,
 };
