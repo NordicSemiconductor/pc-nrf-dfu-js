@@ -25,7 +25,9 @@ export const errorMessages = {
     0x32: 'Invoked with a mismatched CRC32 checksum.',
     0x33: 'Tried to push more bytes to a chunk than the chunk size.',
     0x34: 'Tried to select invalid payload type. Valid types are 0x01 and 0x02.',
-
+    0x51: 'Could not discover DFU control and packet characteristics',
+    0x52: 'Timeout while fetching characteristics from BLE peripheral',
+    0x53: 'Could not subscribe to changes of the control characteristics',
 
 }
 
