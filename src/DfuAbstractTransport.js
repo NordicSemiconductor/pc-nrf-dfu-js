@@ -22,7 +22,7 @@ export default class DfuAbstractTransport {
     constructor() {
         if (this.constructor === DfuAbstractTransport) {
             // throw new Error('Cannot instantiate DfuAbstractTransport, use a concrete subclass instead.');
-            throw new DfuError(0x00);
+            throw new DfuError(0x0000);
         }
     }
 
@@ -182,7 +182,7 @@ export default class DfuAbstractTransport {
             .catch(err => {
                 if (retries >= 5) {
                     // return Promise.reject(new Error(`Too many write failures. Last failure: ${err}`));
-                    return Promise.reject(new DfuError(0x04, `Last failure: ${err}`));
+                    return Promise.reject(new DfuError(0x0004, `Last failure: ${err}`));
                 }
                 debug(`Chunk write failed (${err}) Re-sending the whole chunk starting at ${start}. Times retried: ${retries}`);
                 //             throw err;

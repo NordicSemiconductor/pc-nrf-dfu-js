@@ -1,8 +1,8 @@
 // Error types for errorMessages, responseErrorMessages and extendedErrorMessages
 export const errorTypes = {
     0x00: 'Error message',
-    0x01: 'Error message for known response code',
-    0x02: 'Error message for known extended error code',
+    0x01: 'Error message for known response code from DFU target',
+    0x02: 'Error message for known extended error code from DFU target',
 }
 
 // Error messages for pc-nrf-dfu-js
@@ -12,6 +12,16 @@ export const errorMessages = {
     0x02: 'Unexpected bytes to be sent.',
     0x03: 'CRC mismatches.',
     0x04: 'Too many write failures.',
+    0x10: 'Cannot instantiate DfuTransportPrn, use a concrete subclass instead.',
+    0x11: 'DFU procotol cannot use a PRN higher than 0xFFFF.',
+    0x12: 'DFU transport tried to read() while another read() was still waiting',
+    0x13: 'Timeout while reading from serial transport. See https://github.com/NordicSemiconductor/pc-nrfconnect-core/blob/master/doc/serial-timeout-troubleshoot.md',
+    0x14: 'DFU transport received two messages at once',
+    0x15: 'Response from DFU target did not start with 0x60',
+    0x16: 'Tried to assert an empty parsed response',
+    0x17: 'Unexpected opcode in response',
+    0x18: 'Unexpected bytes in response',
+
 }
 
 
@@ -38,6 +48,7 @@ export const responseErrorMessages = {
     //  0x09: missing from the spec
     0x0A: 'Operation failed.',
 //  0x0B: extended error, will read next byte from the response and use it as extended error code
+    0xFF: 'Received unknown response result code.',
 };
 
 
@@ -63,5 +74,6 @@ export const extendedErrorMessages = {
     0x0C: 'The hash of the received firmware image does not match the hash in the init packet.',
     0x0D: 'The available space on the device is insufficient to hold the firmware.',
     0x0E: 'The requested firmware to update was already present on the system.',
+    0xFF: 'Received unknown extended result code.',
 };
 
