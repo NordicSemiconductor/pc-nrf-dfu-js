@@ -26,12 +26,10 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
         super();
 
         if (this.constructor === DfuTransportPrn) {
-            // throw new Error('Cannot instantiate DfuTransportPrn, use a concrete subclass instead.');
             throw new DfuError(0x0010);
         }
 
         if (packetReceiveNotification > 0xFFFF) { // Ensure it fits in 16 bits
-            // throw new Error('DFU procotol cannot use a PRN higher than 0xFFFF.');
             throw new DfuError(0x0011);
         }
 
@@ -85,7 +83,6 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
     // Cannot have more than one pending request at any time.
     read() {
         if (this.waitingForPacket) {
-            // throw new Error('DFU transport tried to read() while another read() was still waiting');
             throw new DfuError(0x0012);
         }
 
@@ -110,7 +107,6 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
                 if (this.waitingForPacket && this.waitingForPacket === readCallback) {
                     delete this.waitingForPacket;
                 }
-                // rej(new Error('Timeout while reading from serial transport. See https://github.com/NordicSemiconductor/pc-nrfconnect-core/blob/master/doc/serial-timeout-troubleshoot.md'));
                 rej(new DfuError(0x0013));
             }, 5000);
 
@@ -123,7 +119,6 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
     // just received, or calls the pending read() callback to unlock it
     onData(bytes) {
         if (this.lastReceivedPacket) {
-            // throw new Error('DFU transport received two messages at once');
             throw new DfuError(0x0014);
         }
 
@@ -143,7 +138,6 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
     // If there were any errors, returns a rejected Promise with an error message.
     parse(bytes) { // eslint-disable-line class-methods-use-this
         if (bytes[0] !== 0x60) {
-            // return Promise.reject(new Error('Response from DFU target did not start with 0x60'));
             return Promise.reject(new DfuError(0x0015));
         }
         const opcode = bytes[1];
@@ -156,20 +150,16 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
         let errorCode;
         let errorStr;
         if (resultCode in responseErrorMessages) {
-            // errorStr = `Received error from DFU target: ${errorMessages[resultCode]}`;
             errorCode = (0x01 << 8) + resultCode;
         } else if (resultCode === 0x0B) {
             const extendedErrorCode = bytes[3];
             if (extendedErrorCode in extendedErrorMessages) {
-                // errorStr = `Received extended error from DFU target: ${extendedErrorMessages[extendedErrorCode]}`;
                 errorCode = (0x02 << 8) + extendedErrorCode;
             } else {
-                // errorStr = `Received unknown extended result code from DFU target: 0x0B 0x${extendedErrorCode.toString(16)}`;
                 errorStr = `0x0B 0x${extendedErrorCode.toString(16)}`;
                 errorCode = (0x02 << 8) + 0xFF;
             }
         } else {
-            // errorStr = `Received unknown result code from DFU target: 0x${resultCode.toString(16)}`;
             errorStr = `0x${resultCode.toString(16)}`;
             errorCode = (0x01 << 8) + 0xFF;
         }
@@ -187,18 +177,15 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
             if (!response) {
                 debug('Tried to assert an empty parsed response!');
                 debug('response: ', response);
-                // throw new Error('Tried to assert an empty parsed response!');
                 throw new DfuError(0x0016);
             }
             const [opcode, bytes] = response;
 
             if (opcode !== expectedOpcode) {
-                // throw new Error(`Expected a response with opcode ${expectedOpcode}, got ${opcode} instead.`);
                 throw new DfuError(0x0017, `Expected opcode ${expectedOpcode}, got ${opcode} instead.`);
             }
 
             if (bytes.length !== expectedLength) {
-                // throw new Error(`Expected ${expectedLength} bytes in response to opcode ${expectedOpcode}, got ${bytes.length} bytes instead.`);
                 throw new DfuError(0x0018, `Expected ${expectedLength} bytes in response to opcode ${expectedOpcode}, got ${bytes.length} bytes instead.`);
             }
 

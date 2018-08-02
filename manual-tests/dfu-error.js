@@ -2,8 +2,6 @@
 
 let nrfDfu = require('../dist/nrf-dfu.cjs');
 
-const SerialPort = require('serialport');
-
 const Debug = require('debug');
 debug = Debug('dfu:dfu-error-test');
 

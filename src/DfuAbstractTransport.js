@@ -21,7 +21,6 @@ const debug = require('debug')('dfu:transport');
 export default class DfuAbstractTransport {
     constructor() {
         if (this.constructor === DfuAbstractTransport) {
-            // throw new Error('Cannot instantiate DfuAbstractTransport, use a concrete subclass instead.');
             throw new DfuError(0x0000);
         }
     }
@@ -110,7 +109,6 @@ export default class DfuAbstractTransport {
                 // continue an interrupted DFU, and the behaviour in this case is to panic.
                 debug(`CRC mismatch: expected/actual 0x${crc.toString(16)}/0x${crcSoFar.toString(16)}`);
 
-                // return Promise.reject(new Error('A previous DFU process was interrupted, and it was left in such a state that cannot be continued. Please perform a DFU procedure disabling continuation.'));
                 return Promise.reject(new DfuError(0x0001));
             }
             const end = Math.min(bytes.length, chunkSize);
@@ -163,7 +161,6 @@ export default class DfuAbstractTransport {
             })
             .then(([offset, crc]) => {
                 if (offset !== end) {
-                    // throw new Error(`Expected ${end} bytes to have been sent, actual is ${offset} bytes.`);
                     throw new DfuError(0x0002, `Expected ${end} bytes to have been sent, actual is ${offset} bytes.`);
                 }
 
@@ -173,7 +170,6 @@ export default class DfuAbstractTransport {
                 //             }
 
                 if (crcAtChunkEnd !== crc) {
-                    // throw new Error(`CRC mismatch after ${end} bytes have been sent: expected ${crcAtChunkEnd}, got ${crc}.`);
                     throw new DfuError(0x0003, `CRC mismatch after ${end} bytes have been sent: expected ${crcAtChunkEnd}, got ${crc}.`);
                 } else {
                     debug(`Explicit checksum OK at ${end} bytes`);
@@ -181,7 +177,6 @@ export default class DfuAbstractTransport {
             })
             .catch(err => {
                 if (retries >= 5) {
-                    // return Promise.reject(new Error(`Too many write failures. Last failure: ${err}`));
                     return Promise.reject(new DfuError(0x0004, `Last failure: ${err}`));
                 }
                 debug(`Chunk write failed (${err}) Re-sending the whole chunk starting at ${start}. Times retried: ${retries}`);

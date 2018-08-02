@@ -40,15 +40,12 @@ export default class DfuTransportSink extends DfuAbstractTransport {
 
     writeObject(bytes, crcSoFar) {
         if (!this.selected) {
-            // throw new Error('Must create/select a payload type first.');
             throw new DfuError(0x0031);
         }
         if (crcSoFar !== this.crcs[this.selected]) {
-            // throw new Error('Invoked with a mismatched CRC32 checksum.');
             throw new DfuError(0x0032);
         }
         if (bytes.length > this.sizes[this.selected]) {
-            // throw new Error('Tried to push more bytes to a chunk than the chunk size.');
             throw new DfuError(0x0033);
         }
         this.offsets[this.selected] += bytes.length;
@@ -77,7 +74,6 @@ export default class DfuTransportSink extends DfuAbstractTransport {
 
     selectObject(type) {
         if (!Object.prototype.hasOwnProperty.call(this.offsets, type)) {
-            // throw new Error('Tried to select invalid payload type. Valid types are 0x01 and 0x02.');
             throw new DfuError(0x0034);
         }
         this.selected = type;
