@@ -3,6 +3,7 @@
 // const crc32 = crc.crc32;
 // import {crc32} from 'crc';
 import crc32 from './util/crc32';
+import DfuError from './DfuError';
 
 import DfuAbstractTransport from './DfuAbstractTransport';
 

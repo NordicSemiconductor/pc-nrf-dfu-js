@@ -1,4 +1,5 @@
 import DfuTransportPrn from './DfuTransportPrn';
+import DfuError from './DfuError';
 
 const debug = require('debug')('dfu:noble');
 

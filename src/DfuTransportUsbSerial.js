@@ -54,7 +54,7 @@ export default class DfuTransportUsbSerial extends DfuTransportSerial {
                             debug(`No port with serial number ${this.serialNumber} found. Retrying...`);
                             setTimeout(tryFindPort, retryDelay);
                         } else {
-                            rej(new Error(`Unable to find port with serial number ${this.serialNumber}`));
+                            rej(new DfuError(0x0072, `With serial number ${this.serialNumber}`));
                         }
                     });
             };

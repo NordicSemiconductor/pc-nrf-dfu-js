@@ -1,8 +1,9 @@
 // FIXME: Should be `import {crc32} from 'crc'`, https://github.com/alexgorbatchev/node-crc/pull/50
 import crc32 from './util/crc32';
+import DfuError from './DfuError';
 
 import DfuAbstractTransport from './DfuAbstractTransport';
-import { errorMessages, extendedErrorMessages } from './DfuErrorConstants';
+import { responseErrorMessages, extendedErrorMessages } from './DfuErrorConstants';
 
 const debug = require('debug')('dfu:prntransport');
 
@@ -154,7 +155,7 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
 
         let errorCode;
         let errorStr;
-        if (resultCode in errorMessages) {
+        if (resultCode in responseErrorMessages) {
             // errorStr = `Received error from DFU target: ${errorMessages[resultCode]}`;
             errorCode = (0x01 << 8) + resultCode;
         } else if (resultCode === 0x0B) {

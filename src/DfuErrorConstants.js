@@ -28,7 +28,8 @@ export const errorMessages = {
     0x51: 'Could not discover DFU control and packet characteristics',
     0x52: 'Timeout while fetching characteristics from BLE peripheral',
     0x53: 'Could not subscribe to changes of the control characteristics',
-
+    0x71: 'Unkown firmware image type',
+    0x72: 'Unable to find port.'
 }
 
 
