@@ -21,6 +21,11 @@ export const errorMessages = {
     0x16: 'Tried to assert an empty parsed response',
     0x17: 'Unexpected opcode in response',
     0x18: 'Unexpected bytes in response',
+    0x31: 'Must create/select a payload type first.',
+    0x32: 'Invoked with a mismatched CRC32 checksum.',
+    0x33: 'Tried to push more bytes to a chunk than the chunk size.',
+    0x34: 'Tried to select invalid payload type. Valid types are 0x01 and 0x02.',
+
 
 }
 
