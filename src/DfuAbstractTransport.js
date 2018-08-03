@@ -3,7 +3,7 @@
 // const crc32 = crc.crc32;
 // import {crc32} from 'crc';
 import crc32 from './util/crc32';
-import DfuError from './DfuError';
+import { DfuError, ErrorCode } from './DfuError';
 
 // import ProgressCounter from './ProgressCounter';
 
@@ -21,7 +21,7 @@ const debug = require('debug')('dfu:transport');
 export default class DfuAbstractTransport {
     constructor() {
         if (this.constructor === DfuAbstractTransport) {
-            throw new DfuError(0x0000);
+            throw new DfuError(ErrorCode.ERROR_CAN_NOT_INIT_ABSTRACT_TRANSPORT);
         }
     }
 
@@ -109,7 +109,7 @@ export default class DfuAbstractTransport {
                 // continue an interrupted DFU, and the behaviour in this case is to panic.
                 debug(`CRC mismatch: expected/actual 0x${crc.toString(16)}/0x${crcSoFar.toString(16)}`);
 
-                return Promise.reject(new DfuError(0x0001));
+                return Promise.reject(new DfuError(ErrorCode.ERROR_PRE_DFU_INTERRUPTED));
             }
             const end = Math.min(bytes.length, chunkSize);
 
@@ -161,7 +161,7 @@ export default class DfuAbstractTransport {
             })
             .then(([offset, crc]) => {
                 if (offset !== end) {
-                    throw new DfuError(0x0002, `Expected ${end} bytes to have been sent, actual is ${offset} bytes.`);
+                    throw new DfuError(ErrorCode.ERROR_UNEXPECTED_BYTES, `Expected ${end} bytes to have been sent, actual is ${offset} bytes.`);
                 }
 
                 //             if (Math.random() < 0.35) {
@@ -170,14 +170,14 @@ export default class DfuAbstractTransport {
                 //             }
 
                 if (crcAtChunkEnd !== crc) {
-                    throw new DfuError(0x0003, `CRC mismatch after ${end} bytes have been sent: expected ${crcAtChunkEnd}, got ${crc}.`);
+                    throw new DfuError(ErrorCode.ERROR_CRC_MISMATCH, `CRC mismatch after ${end} bytes have been sent: expected ${crcAtChunkEnd}, got ${crc}.`);
                 } else {
                     debug(`Explicit checksum OK at ${end} bytes`);
                 }
             })
             .catch(err => {
                 if (retries >= 5) {
-                    return Promise.reject(new DfuError(0x0004, `Last failure: ${err}`));
+                    return Promise.reject(new DfuError(ErrorCode.ERROR_TOO_MANY_WRITE_FAILURES, `Last failure: ${err}`));
                 }
                 debug(`Chunk write failed (${err}) Re-sending the whole chunk starting at ${start}. Times retried: ${retries}`);
                 //             throw err;

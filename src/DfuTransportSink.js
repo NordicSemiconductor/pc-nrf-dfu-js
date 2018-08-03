@@ -3,7 +3,7 @@
 // const crc32 = crc.crc32;
 // import {crc32} from 'crc';
 import crc32 from './util/crc32';
-import DfuError from './DfuError';
+import { DfuError, ErrorCode } from './DfuError';
 
 import DfuAbstractTransport from './DfuAbstractTransport';
 
@@ -40,13 +40,13 @@ export default class DfuTransportSink extends DfuAbstractTransport {
 
     writeObject(bytes, crcSoFar) {
         if (!this.selected) {
-            throw new DfuError(0x0031);
+            throw new DfuError(ErrorCode.ERROR_MUST_HAVE_PAYLOAD);
         }
         if (crcSoFar !== this.crcs[this.selected]) {
-            throw new DfuError(0x0032);
+            throw new DfuError(ErrorCode.ERROR_INVOKED_MISMATCHED_CRC32);
         }
         if (bytes.length > this.sizes[this.selected]) {
-            throw new DfuError(0x0033);
+            throw new DfuError(ErrorCode.ERROR_MORE_BYTES_THAN_CHUNK_SIZE);
         }
         this.offsets[this.selected] += bytes.length;
         this.crcs[this.selected] = crc32(bytes, crcSoFar);
@@ -60,21 +60,21 @@ export default class DfuTransportSink extends DfuAbstractTransport {
 
     crcObject() {
         if (!this.selected) {
-            throw new DfuError(0x0031);
+            throw new DfuError(ErrorCode.ERROR_MUST_HAVE_PAYLOAD);
         }
         return Promise.resolve();
     }
 
     executeObject() {
         if (!this.selected) {
-            throw new DfuError(0x0031);
+            throw new DfuError(ErrorCode.ERROR_MUST_HAVE_PAYLOAD);
         }
         return Promise.resolve();
     }
 
     selectObject(type) {
         if (!Object.prototype.hasOwnProperty.call(this.offsets, type)) {
-            throw new DfuError(0x0034);
+            throw new DfuError(ErrorCode.ERROR_INVALID_PAYLOAD_TYPE);
         }
         this.selected = type;
         return Promise.resolve([this.offsets[type], this.crcs[type], this.chunkSize]);

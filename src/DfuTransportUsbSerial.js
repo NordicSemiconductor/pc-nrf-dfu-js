@@ -1,5 +1,5 @@
 import DfuTransportSerial from './DfuTransportSerial';
-import DfuError from './DfuError';
+import { DfuError, ErrorCode } from './DfuError';
 
 const debug = require('debug')('dfu:usbserial');
 const SerialPort = require('serialport');
@@ -54,7 +54,7 @@ export default class DfuTransportUsbSerial extends DfuTransportSerial {
                             debug(`No port with serial number ${this.serialNumber} found. Retrying...`);
                             setTimeout(tryFindPort, retryDelay);
                         } else {
-                            rej(new DfuError(0x0072, `With serial number ${this.serialNumber}`));
+                            rej(new DfuError(ErrorCode.ERROR_UNABLE_FIND_PORT, `With serial number ${this.serialNumber}`));
                         }
                     });
             };

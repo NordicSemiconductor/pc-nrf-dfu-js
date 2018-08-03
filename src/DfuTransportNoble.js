@@ -1,5 +1,5 @@
 import DfuTransportPrn from './DfuTransportPrn';
-import DfuError from './DfuError';
+import { DfuError, ErrorCode } from './DfuError';
 
 const debug = require('debug')('dfu:noble');
 
@@ -137,7 +137,7 @@ export default class DfuTransportNoble extends DfuTransportPrn {
                         if (this.dfuControlCharacteristic && this.dfuPacketCharacteristic) {
                             return res();
                         }
-                        return rej(new DfuError(0x0051));
+                        return rej(new DfuError(ErrorCode.ERROR_CAN_NOT_DISCOVER_DFU_CONTROL));
                     });
                     return undefined;
                 });
@@ -156,7 +156,7 @@ export default class DfuTransportNoble extends DfuTransportPrn {
         this.readyPromise = Promise.race([
             this.getCharacteristics(),
             new Promise((res, rej) => {
-                setTimeout(() => rej(new DfuError(0x0052)), 500);
+                setTimeout(() => rej(new DfuError(ErrorCode.ERROR_TIMEOUT_FETCHING_CHARACTERISTICS)), 500);
             }),
         ])
             .then(() => {
@@ -167,7 +167,7 @@ export default class DfuTransportNoble extends DfuTransportPrn {
                     debug('Subscribing to notifications on the ctrl characteristic');
                     this.dfuControlCharacteristic.subscribe(err => {
                         if (err) {
-                            return rej(new DfuError(0x0053));
+                            return rej(new DfuError(ErrorCode.ERROR_CAN_NOT_SUBSCRIBE_CHANGES));
                         }
                         // this.dfuControlCharacteristic.on('data', this.onData.bind(this));
                         this.dfuControlCharacteristic.on('data', data => {
