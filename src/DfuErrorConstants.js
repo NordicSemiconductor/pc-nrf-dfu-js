@@ -7,7 +7,7 @@ export const errorTypes = {
 
 // Error messages for pc-nrf-dfu-js
 export const errorMessages = {
-    0x00: 'Cannot instantiate DfuAbstractTransport, use a concrete subclass instead.',
+    [somevar]: 'Cannot instantiate DfuAbstractTransport, use a concrete subclass instead.',
     0x01: 'A previous DFU process was interrupted, and it was left in such a state that cannot be continued. Please perform a DFU procedure disabling continuation.',
     0x02: 'Unexpected bytes to be sent.',
     0x03: 'CRC mismatches.',
@@ -32,7 +32,7 @@ export const errorMessages = {
     0x72: 'Unable to find port.'
 }
 
-
+const somevar = 0x00;
 
 // Error messages for the known response codes.
 // See http://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.sdk5.v14.2.0%2Fgroup__nrf__dfu__rescodes.html
