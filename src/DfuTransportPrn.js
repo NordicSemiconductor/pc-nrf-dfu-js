@@ -242,7 +242,7 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
                                 debug(`PRN checksum OK at offset ${offset} (0x${offset.toString(16)}) (0x${crc.toString(16)})`);
                                 return undefined;
                             }
-                            return Promise.reject(new DfuError(0x0003, `CRC mismatch during PRN at byte ${offset}/${newOffsetSoFar}, expected 0x${newCrcSoFar.toString(16)} but got 0x${crc.toString(16)} instead`));
+                            return Promise.reject(new DfuError(ErrorCode.ERROR_CRC_MISMATCH, `CRC mismatch during PRN at byte ${offset}/${newOffsetSoFar}, expected 0x${newCrcSoFar.toString(16)} but got 0x${crc.toString(16)} instead`));
                         });
                     }
                     return undefined;
