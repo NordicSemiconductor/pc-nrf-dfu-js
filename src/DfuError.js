@@ -64,6 +64,7 @@ export const ErrorCode = {
     ERROR_EXT_FIRMWARE_HASH_NOT_MATCH: 0x020C,
     ERROR_EXT_SPACE_INSUFFICIENT: 0x020D,
     ERROR_EXT_FIRMWARE_ALREADY_PRESENT: 0x020E,
+    ERROR_EXT_ERROR_CODE_UNKNOWN: 0x02FF,
 }
 
 // Error types for errorMessages, responseErrorMessages and extendedErrorMessages
@@ -144,6 +145,7 @@ export const ExtendedErrorMessages = {
     [ErrorCode.ERROR_EXT_FIRMWARE_HASH_NOT_MATCH]: 'The hash of the received firmware image does not match the hash in the init packet.',
     [ErrorCode.ERROR_EXT_SPACE_INSUFFICIENT]: 'The available space on the device is insufficient to hold the firmware.',
     [ErrorCode.ERROR_EXT_FIRMWARE_ALREADY_PRESENT]: 'The requested firmware to update was already present on the system.',
+    [ErrorCode.ERROR_EXT_ERROR_CODE_UNKNOWN]: 'An error happened, but its extended error code is unknown.',
 };
 
 /**

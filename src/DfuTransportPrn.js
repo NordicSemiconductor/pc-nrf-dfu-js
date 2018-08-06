@@ -148,19 +148,21 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
 
         let errorCode;
         let errorStr;
-        if (resultCode in ResponseErrorMessages) {
-            errorCode = (ErrorCode.ERROR_MESSAGE_RSP << 8) + resultCode;
+        const resultCodeRsp = (ErrorCode.ERROR_MESSAGE_RSP << 8) + resultCode;
+        if (resultCodeRsp in ResponseErrorMessages) {
+            errorCode = resultCodeRsp;
         } else if (resultCode === 0x0B) {
             const extendedErrorCode = bytes[3];
-            if (extendedErrorCode in ExtendedErrorMessages) {
-                errorCode = (ErrorCode.ERROR_MESSAGE_EXT << 8) + extendedErrorCode;
+            const resultCodeExt = (ErrorCode.ERROR_MESSAGE_EXT << 8) + extendedErrorCode;
+            if (resultCodeExt in ExtendedErrorMessages) {
+                errorCode = resultCodeExt;
             } else {
                 errorStr = `0x0B 0x${extendedErrorCode.toString(16)}`;
-                errorCode = (ErrorCode.ERROR_MESSAGE_EXT << 8) + 0xFF;
+                errorCode = ErrorCode.ERROR_EXT_ERROR_CODE_UNKNOWN;
             }
         } else {
             errorStr = `0x${resultCode.toString(16)}`;
-            errorCode = (ErrorCode.ERROR_MESSAGE_RSP << 8) + 0xFF;
+            errorCode = ErrorCode.ERROR_RSP_OPCODE_UNKNOWN;
         }
 
         debug(errorCode, errorStr);
