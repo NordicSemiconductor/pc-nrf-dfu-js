@@ -40,31 +40,33 @@ export const ErrorCode = {
     ERROR_UNABLE_FIND_PORT: 0x0072,
 
     // Error code for response error messages
-    ERROR_RSP_OPCODE_MISSING_MALFORMED: 0x0100,
-    ERROR_RSP_OPCODE_UNKNOWN: 0x0102,
-    ERROR_RSP_PARAMETER_MISSING: 0x0103,
-    ERROR_RSP_NOT_ENOUGH_MEMORY: 0x0104,
-    ERROR_RSP_DATA_OBJECT_NOT_MATCH: 0x0105,
-    ERROR_RSP_UNSUPPORTED_OBJECT_TYPE:0x0107,
-    ERRRO_RSP_INCORRECT_STATE: 0x0108,
+    ERROR_RSP_INVALID: 0x0100,
+    ERROR_RSP_SUCCESS: 0x0101,
+    ERROR_RSP_OP_CODE_NOT_SUPPORTED: 0x0102,
+    ERROR_RSP_INVALID_PARAMETER: 0x0103,
+    ERROR_RSP_INSUFFICIENT_RESOURCES: 0x0104,
+    ERROR_RSP_INVALID_OBJECT: 0x0105,
+    ERROR_RSP_UNSUPPORTED_TYPE: 0x0107,
+    ERROR_RSP_OPERATION_NOT_PERMITTED: 0x0108,
     ERROR_RSP_OPERATION_FAILED: 0x010A,
+    ERROR_RSP_EXT_ERROR: 0x010B,
 
     // Error code for extended error messages
-    ERROR_EXT_ERROR_CODE_NOT_SET: 0x0200,
-    ERROR_EXT_ERROR_CODE_INCORRECT: 0x0201,
-    ERROR_EXT_COMMAND_FORMAT_INCORRECT: 0x0203,
-    ERROR_EXT_COMMAND_PARSED_BUT_UNKNOWN: 0x0204,
-    ERROR_EXT_FIRMWARE_VERSION_LOW: 0x0205,
-    ERROR_EXT_HARDWARE_VERSION_NOT_MATCH: 0x0206,
-    ERROR_EXT_SOFTDEVICE_NOT_CONTAINED: 0x0207,
-    ERROR_EXT_INIT_PACKT_NO_SIGNATURE: 0x0208,
-    ERROR_EXT_HASH_TYPE_NOT_SUPPORT: 0x0209,
-    ERROR_EXT_FIRMWARE_HASH_CAN_NOT_CALCULATED: 0x020A,
-    ERROR_EXT_SIGNATURE_TYPE_NOT_SUPPORT: 0x020B,
-    ERROR_EXT_FIRMWARE_HASH_NOT_MATCH: 0x020C,
-    ERROR_EXT_SPACE_INSUFFICIENT: 0x020D,
-    ERROR_EXT_FIRMWARE_ALREADY_PRESENT: 0x020E,
-    ERROR_EXT_ERROR_CODE_UNKNOWN: 0x02FF,
+    ERROR_EXT_NO_ERROR: 0x0200,
+    ERROR_EXT_INVALID_ERROR_CODE: 0x0201,
+    ERROR_EXT_WRONG_COMMAND_FORMAT: 0x0202,
+    ERROR_EXT_UNKNOWN_COMMAND: 0x0203,
+    ERROR_EXT_INIT_COMMAND_INVALID: 0x0204,
+    ERROR_EXT_FW_VERSION_FAILURE: 0x0205,
+    ERROR_EXT_HW_VERSION_FAILURE: 0x0206,
+    ERROR_EXT_SD_VERSION_FAILURE: 0x0207,
+    ERROR_EXT_SIGNATURE_MISSING: 0x0208,
+    ERROR_EXT_WRONG_HASH_TYPE: 0x0209,
+    ERROR_EXT_HASH_FAILED: 0x020A,
+    ERROR_EXT_WRONG_SIGNATURE_TYPE: 0x020B,
+    ERROR_EXT_VERIFICATION_FAILED: 0x020C,
+    ERROR_EXT_INSUFFICIENT_SPACE: 0x020D,
+    ERROR_EXT_FW_ALREADY_PRESENT: 0x020E,
 }
 
 // Error types for errorMessages, responseErrorMessages and extendedErrorMessages
@@ -108,17 +110,17 @@ export const ErrorMessages = {
 // http://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.sdk5.v14.2.0%2Flib_dfu_transport_serial.html
 
 export const ResponseErrorMessages = {
-    [ErrorCode.ERROR_RSP_OPCODE_MISSING_MALFORMED]: 'Missing or malformed opcode.',
+    [ErrorCode.ERROR_RSP_INVALID]: 'Missing or malformed opcode.',
     //  0x01: success
-    [ErrorCode.ERROR_RSP_OPCODE_UNKNOWN]: 'Opcode unknown or not supported.',
-    [ErrorCode.ERROR_RSP_PARAMETER_MISSING]: 'A parameter for the opcode was missing.',
-    [ErrorCode.ERROR_RSP_NOT_ENOUGH_MEMORY]: 'Not enough memory for the data object.',
+    [ErrorCode.ERROR_RSP_OP_CODE_NOT_SUPPORTED]: 'Opcode unknown or not supported.',
+    [ErrorCode.ERROR_RSP_INVALID_PARAMETER]: 'A parameter for the opcode was missing.',
+    [ErrorCode.ERROR_RSP_INSUFFICIENT_RESOURCES]: 'Not enough memory for the data object.',
     // 0x05 should not happen. Bootloaders starting from late 2017 and later will
     // use extended error codes instead.
-    [ErrorCode.ERROR_RSP_DATA_OBJECT_NOT_MATCH]: 'The data object didn\'t match firmware/hardware, or missing crypto signature, or malformed protocol buffer, or command parse failed.',
+    [ErrorCode.ERROR_RSP_INVALID_OBJECT]: 'The data object didn\'t match firmware/hardware, or missing crypto signature, or malformed protocol buffer, or command parse failed.',
     //  0x06: missing from the spec
-    [ErrorCode.ERROR_RSP_UNSUPPORTED_OBJECT_TYPE]: 'Unsupported object type for create/read operation.',
-    [ErrorCode.ERRRO_RSP_INCORRECT_STATE]: 'Cannot allow this operation in the current DFU state.',
+    [ErrorCode.ERROR_RSP_UNSUPPORTED_TYPE]: 'Unsupported object type for create/read operation.',
+    [ErrorCode.ERROR_RSP_OPERATION_NOT_PERMITTED]: 'Cannot allow this operation in the current DFU state.',
     //  0x09: missing from the spec
     [ErrorCode.ERROR_RSP_OPERATION_FAILED]: 'Operation failed.',
 //  0x0B: extended error, will read next byte from the response and use it as extended error code
@@ -128,24 +130,23 @@ export const ResponseErrorMessages = {
 // Error messages for the known extended error codes.
 // See http://infocenter.nordicsemi.com/index.jsp?topic=%2Fcom.nordic.infocenter.sdk5.v14.2.0%2Fgroup__sdk__nrf__dfu__transport.html
 export const ExtendedErrorMessages = {
-    [ErrorCode.ERROR_EXT_ERROR_CODE_NOT_SET]: 'An error happened, but its extended error code hasn\'t been set.',
-    [ErrorCode.ERROR_EXT_COMMAND_FORMAT_INCORRECT]: 'An error happened, but its extended error code is incorrect.',
+    [ErrorCode.ERROR_EXT_NO_ERROR]: 'An error happened, but its extended error code hasn\'t been set.',
+    [ErrorCode.ERROR_EXT_INVALID_ERROR_CODE]: 'An error happened, but its extended error code is incorrect.',
     // Extended 0x02 should never happen, because responses 0x02 and 0x03
     // should cover all possible incorrect inputs
-    [ErrorCode.ERROR_EXT_COMMAND_PARSED_BUT_UNKNOWN]: 'The format of the command was incorrect.',
-    [ErrorCode.ERROR_EXT_COMMAND_FORMAT_INCORRECT]: 'Command successfully parsed, but it is not supported or unknown.',
-    [ErrorCode.ERROR_EXT_COMMAND_PARSED_BUT_UNKNOWN]: 'The init command is invalid. The init packet either has an invalid update type or it is missing required fields for the update type (for example, the init packet for a SoftDevice update is missing the SoftDevice size field).',
-    [ErrorCode.ERROR_EXT_FIRMWARE_VERSION_LOW]: 'The firmware version is too low. For an application, the version must be greater than the current application. For a bootloader, it must be greater than or equal to the current version. This requirement prevents downgrade attacks.',
-    [ErrorCode.ERROR_EXT_HARDWARE_VERSION_NOT_MATCH]: 'The hardware version of the device does not match the required hardware version for the update.',
-    [ErrorCode.ERROR_EXT_SOFTDEVICE_NOT_CONTAINED]: 'The array of supported SoftDevices for the update does not contain the FWID of the current SoftDevice.',
-    [ErrorCode.ERROR_EXT_INIT_PACKT_NO_SIGNATURE]: 'The init packet does not contain a signature. This bootloader requires DFU updates to be signed.',
-    [ErrorCode.ERROR_EXT_SIGNATURE_TYPE_NOT_SUPPORT]: 'The hash type that is specified by the init packet is not supported by the DFU bootloader.',
-    [ErrorCode.ERROR_EXT_FIRMWARE_HASH_CAN_NOT_CALCULATED]: 'The hash of the firmware image cannot be calculated.',
-    [ErrorCode.ERROR_EXT_HASH_TYPE_NOT_SUPPORT]: 'The type of the signature is unknown or not supported by the DFU bootloader.',
-    [ErrorCode.ERROR_EXT_FIRMWARE_HASH_NOT_MATCH]: 'The hash of the received firmware image does not match the hash in the init packet.',
-    [ErrorCode.ERROR_EXT_SPACE_INSUFFICIENT]: 'The available space on the device is insufficient to hold the firmware.',
-    [ErrorCode.ERROR_EXT_FIRMWARE_ALREADY_PRESENT]: 'The requested firmware to update was already present on the system.',
-    [ErrorCode.ERROR_EXT_ERROR_CODE_UNKNOWN]: 'An error happened, but its extended error code is unknown.',
+    [ErrorCode.ERROR_EXT_WRONG_COMMAND_FORMAT]: 'The format of the command was incorrect.',
+    [ErrorCode.ERROR_EXT_UNKNOWN_COMMAND]: 'Command successfully parsed, but it is not supported or unknown.',
+    [ErrorCode.ERROR_EXT_INIT_COMMAND_INVALID]: 'The init command is invalid. The init packet either has an invalid update type or it is missing required fields for the update type (for example, the init packet for a SoftDevice update is missing the SoftDevice size field).',
+    [ErrorCode.ERROR_EXT_FW_VERSION_FAILURE]: 'The firmware version is too low. For an application, the version must be greater than the current application. For a bootloader, it must be greater than or equal to the current version. This requirement prevents downgrade attacks.',
+    [ErrorCode.ERROR_EXT_HW_VERSION_FAILURE]: 'The hardware version of the device does not match the required hardware version for the update.',
+    [ErrorCode.ERROR_EXT_SD_VERSION_FAILURE]: 'The array of supported SoftDevices for the update does not contain the FWID of the current SoftDevice.',
+    [ErrorCode.ERROR_EXT_SIGNATURE_MISSING]: 'The init packet does not contain a signature. This bootloader requires DFU updates to be signed.',
+    [ErrorCode.ERROR_EXT_WRONG_HASH_TYPE]: 'The hash type that is specified by the init packet is not supported by the DFU bootloader.',
+    [ErrorCode.ERROR_EXT_HASH_FAILED]: 'The hash of the firmware image cannot be calculated.',
+    [ErrorCode.ERROR_EXT_WRONG_SIGNATURE_TYPE]: 'The type of the signature is unknown or not supported by the DFU bootloader.',
+    [ErrorCode.ERROR_EXT_VERIFICATION_FAILED]: 'The hash of the received firmware image does not match the hash in the init packet.',
+    [ErrorCode.ERROR_EXT_INSUFFICIENT_SPACE]: 'The available space on the device is insufficient to hold the firmware.',
+    [ErrorCode.ERROR_EXT_FW_ALREADY_PRESENT]: 'The requested firmware to update was already present on the system.',
 };
 
 /**
