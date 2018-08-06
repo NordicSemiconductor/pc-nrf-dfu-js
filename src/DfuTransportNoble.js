@@ -1,4 +1,5 @@
 import DfuTransportPrn from './DfuTransportPrn';
+import { DfuError, ErrorCode } from './DfuError';
 
 const debug = require('debug')('dfu:noble');
 
@@ -136,7 +137,7 @@ export default class DfuTransportNoble extends DfuTransportPrn {
                         if (this.dfuControlCharacteristic && this.dfuPacketCharacteristic) {
                             return res();
                         }
-                        return rej(new Error('Could not discover DFU control and packet characteristics'));
+                        return rej(new DfuError(ErrorCode.ERROR_CAN_NOT_DISCOVER_DFU_CONTROL));
                     });
                     return undefined;
                 });
@@ -155,7 +156,7 @@ export default class DfuTransportNoble extends DfuTransportPrn {
         this.readyPromise = Promise.race([
             this.getCharacteristics(),
             new Promise((res, rej) => {
-                setTimeout(() => rej(new Error('Timeout while fetching characteristics from BLE peripheral')), 500);
+                setTimeout(() => rej(new DfuError(ErrorCode.ERROR_TIMEOUT_FETCHING_CHARACTERISTICS)), 500);
             }),
         ])
             .then(() => {
@@ -166,7 +167,7 @@ export default class DfuTransportNoble extends DfuTransportPrn {
                     debug('Subscribing to notifications on the ctrl characteristic');
                     this.dfuControlCharacteristic.subscribe(err => {
                         if (err) {
-                            return rej(new Error('Could not subscribe to changes of the control characteristics'));
+                            return rej(new DfuError(ErrorCode.ERROR_CAN_NOT_SUBSCRIBE_CHANGES));
                         }
                         // this.dfuControlCharacteristic.on('data', this.onData.bind(this));
                         this.dfuControlCharacteristic.on('data', data => {

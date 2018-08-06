@@ -1,4 +1,5 @@
 import * as slip from './util/slip';
+import { DfuError, ErrorCode } from './DfuError';
 
 import DfuTransportPrn from './DfuTransportPrn';
 
@@ -241,7 +242,7 @@ export default class DfuTransportSerial extends DfuTransportPrn {
                         imgType = 'Bootloader';
                         break;
                     default:
-                        throw new Error('Unkown firmware image type');
+                        throw new DfuError(ErrorCode.ERROR_RSP_UNSUPPORTED_OBJECT_TYPE);
                 }
 
                 return {

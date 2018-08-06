@@ -1,8 +1,8 @@
 // FIXME: Should be `import {crc32} from 'crc'`, https://github.com/alexgorbatchev/node-crc/pull/50
 import crc32 from './util/crc32';
+import { DfuError, ErrorCode, ResponseErrorMessages, ExtendedErrorMessages } from './DfuError';
 
 import DfuAbstractTransport from './DfuAbstractTransport';
-import { errorMessages, extendedErrorMessages } from './DfuErrorConstants';
 
 const debug = require('debug')('dfu:prntransport');
 
@@ -25,11 +25,11 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
         super();
 
         if (this.constructor === DfuTransportPrn) {
-            throw new Error('Cannot instantiate DfuTransportPrn, use a concrete subclass instead.');
+            throw new DfuError(ErrorCode.ERROR_CAN_NOT_INIT_PRN_TRANSPORT);
         }
 
         if (packetReceiveNotification > 0xFFFF) { // Ensure it fits in 16 bits
-            throw new Error('DFU procotol cannot use a PRN higher than 0xFFFF.');
+            throw new DfuError(ErrorCode.ERROR_CAN_NOT_USE_HIGHER_PRN);
         }
 
         this.prn = packetReceiveNotification;
@@ -82,7 +82,7 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
     // Cannot have more than one pending request at any time.
     read() {
         if (this.waitingForPacket) {
-            throw new Error('DFU transport tried to read() while another read() was still waiting');
+            throw new DfuError(ErrorCode.ERROR_READ_CONFLICT);
         }
 
         if (this.lastReceivedPacket) {
@@ -106,7 +106,7 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
                 if (this.waitingForPacket && this.waitingForPacket === readCallback) {
                     delete this.waitingForPacket;
                 }
-                rej(new Error('Timeout while reading from serial transport. See https://github.com/NordicSemiconductor/pc-nrfconnect-core/blob/master/doc/serial-timeout-troubleshoot.md'));
+                rej(new DfuError(ErrorCode.ERROR_TIMEOUT_READING_SERIAL));
             }, 5000);
 
             this.waitingForPacket = readCallback;
@@ -118,7 +118,7 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
     // just received, or calls the pending read() callback to unlock it
     onData(bytes) {
         if (this.lastReceivedPacket) {
-            throw new Error('DFU transport received two messages at once');
+            throw new DfuError(ErrorCode.ERROR_RECEIVE_TWO_MESSAGES);
         }
 
         if (this.waitingForPacket) {
@@ -137,31 +137,37 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
     // If there were any errors, returns a rejected Promise with an error message.
     parse(bytes) { // eslint-disable-line class-methods-use-this
         if (bytes[0] !== 0x60) {
-            return Promise.reject(new Error('Response from DFU target did not start with 0x60'));
+            return Promise.reject(new DfuError(ErrorCode.ERROR_RESPONSE_NOT_START_WITH_0x60));
         }
         const opcode = bytes[1];
         const resultCode = bytes[2];
-        if (resultCode === 0x01) {
+        if (resultCode === ErrorCode.ERROR_MESSAGE_RSP) {
             debug('Parsed DFU response packet: opcode ', opcode, ', payload: ', bytes.subarray(3));
             return Promise.resolve([opcode, bytes.subarray(3)]);
         }
 
+        let errorCode;
         let errorStr;
-        if (resultCode in errorMessages) {
-            errorStr = `Received error from DFU target: ${errorMessages[resultCode]}`;
-        } else if (resultCode === 0x0B) {
+        const extCode = ErrorCode.ERROR_RSP_EXT_ERROR - (ErrorCode.ERROR_MESSAGE_RSP << 8);
+        const resultCodeRsp = (ErrorCode.ERROR_MESSAGE_RSP << 8) + resultCode;
+        if (resultCodeRsp in ResponseErrorMessages) {
+            errorCode = resultCodeRsp;
+        } else if (resultCode === extCode) {
             const extendedErrorCode = bytes[3];
-            if (extendedErrorCode in extendedErrorMessages) {
-                errorStr = `Received extended error from DFU target: ${extendedErrorMessages[extendedErrorCode]}`;
+            const resultCodeExt = (ErrorCode.ERROR_MESSAGE_EXT << 8) + extendedErrorCode;
+            if (resultCodeExt in ExtendedErrorMessages) {
+                errorCode = resultCodeExt;
             } else {
-                errorStr = `Received unknown extended result code from DFU target: 0x0B 0x${extendedErrorCode.toString(16)}`;
+                errorStr = `0x0B 0x${extendedErrorCode.toString(16)}`;
+                errorCode = ErrorCode.ERROR_EXT_ERROR_CODE_UNKNOWN;
             }
         } else {
-            errorStr = `Received unknown result code from DFU target: 0x${resultCode.toString(16)}`;
+            errorStr = `0x${resultCode.toString(16)}`;
+            errorCode = ErrorCode.ERROR_RSP_OPCODE_UNKNOWN;
         }
 
-        debug(errorStr);
-        return Promise.reject(new Error(errorStr));
+        debug(errorCode, errorStr);
+        return Promise.reject(new DfuError(errorCode, errorStr));
     }
 
 
@@ -173,16 +179,16 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
             if (!response) {
                 debug('Tried to assert an empty parsed response!');
                 debug('response: ', response);
-                throw new Error('Tried to assert an empty parsed response!');
+                throw new DfuError(ErrorCode.ERROR_ASSERT_EMPTY_RESPONSE);
             }
             const [opcode, bytes] = response;
 
             if (opcode !== expectedOpcode) {
-                throw new Error(`Expected a response with opcode ${expectedOpcode}, got ${opcode} instead.`);
+                throw new DfuError(ErrorCode.ERROR_UNEXPECTED_RESPONSE_OPCODE, `Expected opcode ${expectedOpcode}, got ${opcode} instead.`);
             }
 
             if (bytes.length !== expectedLength) {
-                throw new Error(`Expected ${expectedLength} bytes in response to opcode ${expectedOpcode}, got ${bytes.length} bytes instead.`);
+                throw new DfuError(ErrorCode.ERROR_UNEXPECTED_RESPONSE_BYTES, `Expected ${expectedLength} bytes in response to opcode ${expectedOpcode}, got ${bytes.length} bytes instead.`);
             }
 
             return bytes;
@@ -239,7 +245,7 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
                                 debug(`PRN checksum OK at offset ${offset} (0x${offset.toString(16)}) (0x${crc.toString(16)})`);
                                 return undefined;
                             }
-                            return Promise.reject(new Error(`CRC mismatch during PRN at byte ${offset}/${newOffsetSoFar}, expected 0x${newCrcSoFar.toString(16)} but got 0x${crc.toString(16)} instead`));
+                            return Promise.reject(new DfuError(ErrorCode.ERROR_CRC_MISMATCH, `CRC mismatch during PRN at byte ${offset}/${newOffsetSoFar}, expected 0x${newCrcSoFar.toString(16)} but got 0x${crc.toString(16)} instead`));
                         });
                     }
                     return undefined;
