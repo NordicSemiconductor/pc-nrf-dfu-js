@@ -37,37 +37,15 @@
 'use strict';
 
 const path = require('path');
-const SerialPort = require('serialport');
-const nrfDfu = require('../dist/nrf-dfu.cjs');
+const nrfDfu = require('../../dist/nrf-dfu.cjs');
 
 const testSoftDevicePath = path.resolve(__dirname, 'softdevice.zip');
 
-describe('the API', async () => {
-    let port;
-        let lala;
-    beforeAll(async () => {
-        await SerialPort.list().then(ports => {
-            ports = ports.filter(port => port.vendorId === '1915')
-            if (ports && ports[0]) {
-                port =  new SerialPort(ports[0].comName, { baudRate: 115200, autoOpen: false});
-            } else {
-                throw new Error('No serial ports with a Segger are available');
-            }
-        });
-    });
-
-    it('shall dfu', async () => {
-        expect(port).not.toBeNull()
-
+describe('The DFU Update', async () => {
+    it('shall load update from zip', async () => {
         const updates = await nrfDfu.DfuUpdates.fromZipFilePath(testSoftDevicePath);
-        const serialTransport = new nrfDfu.DfuTransportSerial(port, 4);
-
-        const dfu = new nrfDfu.DfuOperation(updates, serialTransport);
-        dfu.start(true)
-            .then(() => {
-            })
-            .catch(() => {
-                throw new Error('Test fails');
-            });
+        expect(updates).not.toBeNull();
+        expect(updates.initPacket).not.toBeNull();
+        expect(updates.firmwareImage).not.toBeNull();
     });
 });

@@ -1,8 +1,48 @@
+/**
+ * copyright (c) 2015 - 2018, nordic semiconductor asa
+ *
+ * all rights reserved.
+ *
+ * redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * 1. redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ *
+ * 2. redistributions in binary form, except as embedded into a nordic
+ *    semiconductor asa integrated circuit in a product or a software update for
+ *    such product, must reproduce the above copyright notice, this list of
+ *    conditions and the following disclaimer in the documentation and/or other
+ *    materials provided with the distribution.
+ *
+ * 3. neither the name of nordic semiconductor asa nor the names of its
+ *    contributors may be used to endorse or promote products derived from this
+ *    software without specific prior written permission.
+ *
+ * 4. this software, with or without modification, must only be used with a
+ *    nordic semiconductor asa integrated circuit.
+ *
+ * 5. any software provided in binary form under this license must not be reverse
+ *    engineered, decompiled, modified and/or disassembled.
+ *
+ * this software is provided by nordic semiconductor asa "as is" and any express
+ * or implied warranties, including, but not limited to, the implied warranties
+ * of merchantability, noninfringement, and fitness for a particular purpose are
+ * disclaimed. in no event shall nordic semiconductor asa or contributors be
+ * liable for any direct, indirect, incidental, special, exemplary, or
+ * consequential damages (including, but not limited to, procurement of substitute
+ * goods or services; loss of use, data, or profits; or business interruption)
+ * however caused and on any theory of liability, whether in contract, strict
+ * liability, or tort (including negligence or otherwise) arising in any way out
+ * of the use of this software, even if advised of the possibility of such damage.
+ *
+ */
+
 import * as JSZip from 'jszip';
 import fs from 'fs';
+import Debug from 'debug';
 
-const debug = require('debug')('dfu:updates');
-
+const debug = Debug('dfu:updates');
 
 // Object.entries polyfill, as per
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/entries
@@ -47,7 +87,6 @@ if (!Object.entries) {
  * `{ initPacket: Uint8Array, firmwareImage: Uint8Array }`.
  *
  */
-
 export default class DfuUpdates {
     constructor(updates) {
         this.updates = updates || [];
@@ -96,7 +135,6 @@ export default class DfuUpdates {
                 // "softdevice", "bootloader", "softdevice_bootloader",
                 // or "application". At least that's what the standard
                 // Nordic DFU does, but nothing stops other implementations
-                // from creating more init packets (with more protobuf defs)
                 // and more types of payload. So we don't check for this.
 
                     debug('Parsed manifest:', manifestJson);
