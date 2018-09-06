@@ -1,3 +1,43 @@
+/**
+ * copyright (c) 2015 - 2018, nordic semiconductor asa
+ *
+ * all rights reserved.
+ *
+ * redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * 1. redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ *
+ * 2. redistributions in binary form, except as embedded into a nordic
+ *    semiconductor asa integrated circuit in a product or a software update for
+ *    such product, must reproduce the above copyright notice, this list of
+ *    conditions and the following disclaimer in the documentation and/or other
+ *    materials provided with the distribution.
+ *
+ * 3. neither the name of nordic semiconductor asa nor the names of its
+ *    contributors may be used to endorse or promote products derived from this
+ *    software without specific prior written permission.
+ *
+ * 4. this software, with or without modification, must only be used with a
+ *    nordic semiconductor asa integrated circuit.
+ *
+ * 5. any software provided in binary form under this license must not be reverse
+ *    engineered, decompiled, modified and/or disassembled.
+ *
+ * this software is provided by nordic semiconductor asa "as is" and any express
+ * or implied warranties, including, but not limited to, the implied warranties
+ * of merchantability, noninfringement, and fitness for a particular purpose are
+ * disclaimed. in no event shall nordic semiconductor asa or contributors be
+ * liable for any direct, indirect, incidental, special, exemplary, or
+ * consequential damages (including, but not limited to, procurement of substitute
+ * goods or services; loss of use, data, or profits; or business interruption)
+ * however caused and on any theory of liability, whether in contract, strict
+ * liability, or tort (including negligence or otherwise) arising in any way out
+ * of the use of this software, even if advised of the possibility of such damage.
+ *
+ */
+
 // FIXME: Should be `import {crc32} from 'crc'`, https://github.com/alexgorbatchev/node-crc/pull/50
 // import * as crc from 'crc';
 // const crc32 = crc.crc32;
@@ -5,10 +45,7 @@
 import crc32 from './util/crc32';
 import { DfuError, ErrorCode } from './DfuError';
 
-// import ProgressCounter from './ProgressCounter';
-
 const debug = require('debug')('dfu:transport');
-
 
 /**
  * Implements the logic common to all transports, but not the transport itself.
@@ -17,7 +54,6 @@ const debug = require('debug')('dfu:transport');
  * and complete the functionality of the needed methods with the actual transport
  * logic.
  */
-
 export default class DfuAbstractTransport {
     constructor() {
         if (this.constructor === DfuAbstractTransport) {
@@ -81,16 +117,10 @@ export default class DfuAbstractTransport {
                         // Fortunately, if an "execute" command is sent right after
                         // another "execute" command, the second one will do nothing
                         // and yet receive an "OK" response code.
-
                         debug('Edge case: payload transferred up to page boundary; previous execute command might have been lost, re-sending.');
 
                         return this.executeObject(type, chunkSize)
                             .then(() => this.sendPayload(type, bytes, true));
-
-                        // Recreate the page (possibly rolling back one page worth of data),
-                        // restart the resume logic from a known state.
-                        //                         return this.createObject(type, chunkSize)
-                        //                         .then(()=>this.sendPayload(type, bytes, true));
                     }
                     debug(`Payload partially transferred sucessfully, continuing from offset ${offset}.`);
 
@@ -102,6 +132,7 @@ export default class DfuAbstractTransport {
                         end, chunkSize, crc
                     );
                 }
+
                 // Note that these are CRC mismatches at a chunk level, not at a
                 // transport level. Individual transports might decide to roll back
                 // parts of a chunk (re-creating it) on PRN CRC failures.
@@ -149,7 +180,6 @@ export default class DfuAbstractTransport {
     // This is done without checksums nor sending the "execute" command. The reason
     // for splitting this code apart is that retrying a chunk is easier when abstracting away
     // the "execute" and "next chunk" logic
-    //
     sendPayloadChunk(type, bytes, start, end, chunkSize, crcSoFar = undefined, retries = 0) {
         const subarray = bytes.subarray(start, end);
         const crcAtChunkEnd = crc32(subarray, crcSoFar);
@@ -164,11 +194,6 @@ export default class DfuAbstractTransport {
                     throw new DfuError(ErrorCode.ERROR_UNEXPECTED_BYTES, `Expected ${end} bytes to have been sent, actual is ${offset} bytes.`);
                 }
 
-                //             if (Math.random() < 0.35) {
-                //                 debug('DEBUG: faking CRC check failure at chunk end');
-                //                 throw new Error(`Faking CRC error at ${end} bytes.`);
-                //             }
-
                 if (crcAtChunkEnd !== crc) {
                     throw new DfuError(ErrorCode.ERROR_CRC_MISMATCH, `CRC mismatch after ${end} bytes have been sent: expected ${crcAtChunkEnd}, got ${crc}.`);
                 } else {
@@ -180,7 +205,6 @@ export default class DfuAbstractTransport {
                     return Promise.reject(new DfuError(ErrorCode.ERROR_TOO_MANY_WRITE_FAILURES, `Last failure: ${err}`));
                 }
                 debug(`Chunk write failed (${err}) Re-sending the whole chunk starting at ${start}. Times retried: ${retries}`);
-                //             throw err;
 
                 // FIXME: Instead of re-creating the whole chunk, select the payload
                 // type again and check the CRC so far.
@@ -243,6 +267,4 @@ export default class DfuAbstractTransport {
 
     // Abort bootloader mode and try to switch back to app mode
     abortObject() {}
-
-    /* eslint-enable class-methods-use-this, no-unused-vars */
 }

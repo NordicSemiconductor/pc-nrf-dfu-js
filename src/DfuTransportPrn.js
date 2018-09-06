@@ -1,11 +1,49 @@
+/**
+ * copyright (c) 2015 - 2018, nordic semiconductor asa
+ *
+ * all rights reserved.
+ *
+ * redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * 1. redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ *
+ * 2. redistributions in binary form, except as embedded into a nordic
+ *    semiconductor asa integrated circuit in a product or a software update for
+ *    such product, must reproduce the above copyright notice, this list of
+ *    conditions and the following disclaimer in the documentation and/or other
+ *    materials provided with the distribution.
+ *
+ * 3. neither the name of nordic semiconductor asa nor the names of its
+ *    contributors may be used to endorse or promote products derived from this
+ *    software without specific prior written permission.
+ *
+ * 4. this software, with or without modification, must only be used with a
+ *    nordic semiconductor asa integrated circuit.
+ *
+ * 5. any software provided in binary form under this license must not be reverse
+ *    engineered, decompiled, modified and/or disassembled.
+ *
+ * this software is provided by nordic semiconductor asa "as is" and any express
+ * or implied warranties, including, but not limited to, the implied warranties
+ * of merchantability, noninfringement, and fitness for a particular purpose are
+ * disclaimed. in no event shall nordic semiconductor asa or contributors be
+ * liable for any direct, indirect, incidental, special, exemplary, or
+ * consequential damages (including, but not limited to, procurement of substitute
+ * goods or services; loss of use, data, or profits; or business interruption)
+ * however caused and on any theory of liability, whether in contract, strict
+ * liability, or tort (including negligence or otherwise) arising in any way out
+ * of the use of this software, even if advised of the possibility of such damage.
+ *
+ */
+
 // FIXME: Should be `import {crc32} from 'crc'`, https://github.com/alexgorbatchev/node-crc/pull/50
 import crc32 from './util/crc32';
 import { DfuError, ErrorCode, ResponseErrorMessages, ExtendedErrorMessages } from './DfuError';
-
 import DfuAbstractTransport from './DfuAbstractTransport';
 
 const debug = require('debug')('dfu:prntransport');
-
 
 /**
  * PRN-capable abstract DFU transport.
@@ -17,7 +55,6 @@ const debug = require('debug')('dfu:prntransport');
  * Both the Serial DFU and the BLE DFU protocols implement these common bits of
  * logic, but they do so in a lower level than the abstract 5-commands DFU protocol.
  */
-
 export default class DfuTransportPrn extends DfuAbstractTransport {
     // The constructor takes the value for the PRN interval. It should be
     // provided by the concrete subclasses.
@@ -33,7 +70,6 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
         }
 
         this.prn = packetReceiveNotification;
-
 
         // Store *one* message waitig to be read()
         this.lastReceivedPacket = undefined;
@@ -74,7 +110,6 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
     ready() {}
 
     /* eslint-enable class-methods-use-this, no-unused-vars */
-
 
     // Requests a (decoded and) parsed packet/message, either a response
     // to a previous command or a PRN notification.
@@ -170,7 +205,6 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
         return Promise.reject(new DfuError(errorCode, errorStr));
     }
 
-
     // Returns a *function* that checks a [opcode, bytes] parameter against the given
     // opcode and byte length, and returns only the bytes.
     // If the opcode is different, or the payload length is different, an error is thrown.
@@ -194,7 +228,6 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
             return bytes;
         };
     }
-
 
     createObject(type, size) {
         debug(`CreateObject type ${type}, size ${size}`);
@@ -335,8 +368,6 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
         return this.ready().then(() =>
             this.writeCommand(new Uint8Array([
                 0x0C, // "Abort" opcode
-            ]))
-        );
-
+            ])));
     }
 }
