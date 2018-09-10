@@ -87,4 +87,12 @@ describe('The DFU Transport', async () => {
             port.close(() => setTimeout(resolve, testDelay));
         });
     }, testTimeout);
+
+    it('shall abort', async () => {
+        const transportSerial = new nrfDfu.DfuTransportSerial(port);
+        await expect(transportSerial.abort()).resolves.not.toBeNull();
+        await new Promise(resolve => {
+            port.close(() => setTimeout(resolve, testDelay));
+        });
+    }, testTimeout);
 });

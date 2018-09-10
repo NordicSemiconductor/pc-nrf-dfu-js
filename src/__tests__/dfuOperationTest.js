@@ -62,7 +62,6 @@ describe('The DFU Operation', async () => {
         expect(port).not.toBeNull();
         const updates = await nrfDfu.DfuUpdates.fromZipFilePath(testSoftDevicePath);
         const serialTransport = new nrfDfu.DfuTransportSerial(port, 4);
-
         const dfu = new nrfDfu.DfuOperation(updates, serialTransport);
         await dfu.start(true)
             .then(async () => {

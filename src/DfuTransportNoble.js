@@ -43,8 +43,6 @@ import { DfuError, ErrorCode } from './DfuError';
 
 const debug = Debug('dfu:noble');
 
-// const noble = require('noble');
-
 /**
  * noble DFU transport.
  *
