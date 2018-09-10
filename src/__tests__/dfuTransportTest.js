@@ -36,7 +36,6 @@
 
 'use strict';
 
-const path = require('path');
 const SerialPort = require('serialport');
 
 const nrfDfu = require('../../dist/nrf-dfu.cjs');
@@ -75,10 +74,17 @@ describe('The DFU Transport', async () => {
 
     it('shall get protocal version through serial transport', async () => {
         const transportSerial = new nrfDfu.DfuTransportSerial(port);
-        expect(transportSerial.getProtocolVersion()).resolves.toBeNull();
+        await expect(transportSerial.getProtocolVersion()).resolves.not.toBeNaN();
         await new Promise(resolve => {
             port.close(resolve);
         });
     }, 5000);
 
+    it('shall get all firmware versions through serial transport', async () => {
+        const transportSerial = new nrfDfu.DfuTransportSerial(port);
+        await expect(transportSerial.getAllFirmwareVersions()).resolves.not.toBeNull();
+        await new Promise(resolve => {
+            port.close(resolve);
+        });
+    }, 5000);
 });

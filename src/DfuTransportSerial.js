@@ -245,14 +245,14 @@ export default class DfuTransportSerial extends DfuTransportPrn {
             .then(this.read.bind(this))
             .then(this.assertPacket(0x0B, 13))
             .then(bytes => {
-            // Decode little-endian fields, by using a DataView with the
-            // same buffer *and* offset than the Uint8Array for the packet payload
+                // Decode little-endian fields, by using a DataView with the
+                // same buffer *and* offset than the Uint8Array for the packet payload
                 const dataView = new DataView(bytes.buffer, bytes.byteOffset);
                 let imgType = dataView.getUint8(0, true);
 
                 switch (imgType) {
                     case 0xFF:
-                    // Meaning "no image at this index"
+                        // Meaning "no image at this index"
                         return false;
                     case 0:
                         imgType = 'SoftDevice';
