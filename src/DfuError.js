@@ -1,4 +1,45 @@
-const debug = require('debug')('dfu:error');
+/**
+ * copyright (c) 2015 - 2018, Nordic Semiconductor ASA
+ *
+ * all rights reserved.
+ *
+ * redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * 1. redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ *
+ * 2. redistributions in binary form, except as embedded into a nordic
+ *    semiconductor asa integrated circuit in a product or a software update for
+ *    such product, must reproduce the above copyright notice, this list of
+ *    conditions and the following disclaimer in the documentation and/or other
+ *    materials provided with the distribution.
+ *
+ * 3. neither the name of Nordic Semiconductor ASA nor the names of its
+ *    contributors may be used to endorse or promote products derived from this
+ *    software without specific prior written permission.
+ *
+ * 4. this software, with or without modification, must only be used with a
+ *    Nordic Semiconductor ASA integrated circuit.
+ *
+ * 5. any software provided in binary form under this license must not be reverse
+ *    engineered, decompiled, modified and/or disassembled.
+ *
+ * this software is provided by Nordic Semiconductor ASA "as is" and any express
+ * or implied warranties, including, but not limited to, the implied warranties
+ * of merchantability, noninfringement, and fitness for a particular purpose are
+ * disclaimed. in no event shall Nordic Semiconductor ASA or contributors be
+ * liable for any direct, indirect, incidental, special, exemplary, or
+ * consequential damages (including, but not limited to, procurement of substitute
+ * goods or services; loss of use, data, or profits; or business interruption)
+ * however caused and on any theory of liability, whether in contract, strict
+ * liability, or tort (including negligence or otherwise) arising in any way out
+ * of the use of this software, even if advised of the possibility of such damage.
+ *
+ */
+import Debug from 'debug';
+
+const debug = Debug('dfu:error');
 
 export const ErrorCode = {
     // Error message types
@@ -67,14 +108,14 @@ export const ErrorCode = {
     ERROR_EXT_VERIFICATION_FAILED: 0x020C,
     ERROR_EXT_INSUFFICIENT_SPACE: 0x020D,
     ERROR_EXT_FW_ALREADY_PRESENT: 0x020E,
-}
+};
 
 // Error types for errorMessages, responseErrorMessages and extendedErrorMessages
 export const ErrorTypes = {
     [ErrorCode.ERROR_MESSAGE]: 'Error message',
     [ErrorCode.ERROR_MESSAGE_RSP]: 'Error message for known response code from DFU target',
     [ErrorCode.ERROR_MESSAGE_EXT]: 'Error message for known extended error code from DFU target',
-}
+};
 
 // Error messages for pc-nrf-dfu-js
 export const ErrorMessages = {
@@ -100,8 +141,8 @@ export const ErrorMessages = {
     [ErrorCode.ERROR_TIMEOUT_FETCHING_CHARACTERISTICS]: 'Timeout while fetching characteristics from BLE peripheral',
     [ErrorCode.ERROR_CAN_NOT_SUBSCRIBE_CHANGES]: 'Could not subscribe to changes of the control characteristics',
     [ErrorCode.ERROR_UNKNOWN_FIRMWARE_TYPE]: 'Unkown firmware image type',
-    [ErrorCode.ERROR_UNABLE_FIND_PORT]: 'Unable to find port.'
-}
+    [ErrorCode.ERROR_UNABLE_FIND_PORT]: 'Unable to find port.',
+};
 
 
 // Error messages for the known response codes.
@@ -154,7 +195,7 @@ export const ExtendedErrorMessages = {
  */
 export class DfuError extends Error {
     constructor(code, message = undefined) {
-        super()
+        super();
         this.code = code;
         this.message = this.getErrorMessage(code);
         if (message) {
@@ -163,34 +204,33 @@ export class DfuError extends Error {
     }
 
     getErrorMessage(code) {
-        let errorMsg;
         const errorType = code >> 8;
 
         debug(`Error type is ${errorType}.`);
 
-        errorMsg = ErrorTypes[errorType];
-        if (!errorMsg) {
+        this.errorMsg = ErrorTypes[errorType];
+        if (!this.errorMsg) {
             throw new Error('Error type is unknown.');
         }
 
-        errorMsg += ': ';
+        this.errorMsg += ': ';
         switch (errorType) {
             case 0x00:
                 debug('This is an error message.');
-                errorMsg += ErrorMessages[code];
+                this.errorMsg += ErrorMessages[code];
                 break;
             case 0x01:
                 debug('This is a response error message.');
-                errorMsg += ResponseErrorMessages[code];
+                this.errorMsg += ResponseErrorMessages[code];
                 break;
             case 0x02:
                 debug('This is an extended error message.');
-                errorMsg += ExtendedErrorMessages[code];
+                this.errorMsg += ExtendedErrorMessages[code];
                 break;
             default:
                 debug('This is an unknown error message.');
         }
 
-        return errorMsg;
+        return this.errorMsg;
     }
 }

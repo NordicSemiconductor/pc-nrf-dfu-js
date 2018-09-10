@@ -1,5 +1,5 @@
 /**
- * copyright (c) 2015 - 2018, nordic semiconductor asa
+ * copyright (c) 2015 - 2018, Nordic Semiconductor ASA
  *
  * all rights reserved.
  *
@@ -15,20 +15,20 @@
  *    conditions and the following disclaimer in the documentation and/or other
  *    materials provided with the distribution.
  *
- * 3. neither the name of nordic semiconductor asa nor the names of its
+ * 3. neither the name of Nordic Semiconductor ASA nor the names of its
  *    contributors may be used to endorse or promote products derived from this
  *    software without specific prior written permission.
  *
  * 4. this software, with or without modification, must only be used with a
- *    nordic semiconductor asa integrated circuit.
+ *    Nordic Semiconductor ASA integrated circuit.
  *
  * 5. any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
  *
- * this software is provided by nordic semiconductor asa "as is" and any express
+ * this software is provided by Nordic Semiconductor ASA "as is" and any express
  * or implied warranties, including, but not limited to, the implied warranties
  * of merchantability, noninfringement, and fitness for a particular purpose are
- * disclaimed. in no event shall nordic semiconductor asa or contributors be
+ * disclaimed. in no event shall Nordic Semiconductor ASA or contributors be
  * liable for any direct, indirect, incidental, special, exemplary, or
  * consequential damages (including, but not limited to, procurement of substitute
  * goods or services; loss of use, data, or profits; or business interruption)
@@ -37,7 +37,6 @@
  * of the use of this software, even if advised of the possibility of such damage.
  *
  */
-
 import * as JSZip from 'jszip';
 import fs from 'fs';
 import Debug from 'debug';

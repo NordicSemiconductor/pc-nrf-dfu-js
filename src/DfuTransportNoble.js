@@ -1,7 +1,47 @@
+/**
+ * copyright (c) 2015 - 2018, Nordic Semiconductor ASA
+ *
+ * all rights reserved.
+ *
+ * redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * 1. redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ *
+ * 2. redistributions in binary form, except as embedded into a nordic
+ *    semiconductor asa integrated circuit in a product or a software update for
+ *    such product, must reproduce the above copyright notice, this list of
+ *    conditions and the following disclaimer in the documentation and/or other
+ *    materials provided with the distribution.
+ *
+ * 3. neither the name of Nordic Semiconductor ASA nor the names of its
+ *    contributors may be used to endorse or promote products derived from this
+ *    software without specific prior written permission.
+ *
+ * 4. this software, with or without modification, must only be used with a
+ *    Nordic Semiconductor ASA integrated circuit.
+ *
+ * 5. any software provided in binary form under this license must not be reverse
+ *    engineered, decompiled, modified and/or disassembled.
+ *
+ * this software is provided by Nordic Semiconductor ASA "as is" and any express
+ * or implied warranties, including, but not limited to, the implied warranties
+ * of merchantability, noninfringement, and fitness for a particular purpose are
+ * disclaimed. in no event shall Nordic Semiconductor ASA or contributors be
+ * liable for any direct, indirect, incidental, special, exemplary, or
+ * consequential damages (including, but not limited to, procurement of substitute
+ * goods or services; loss of use, data, or profits; or business interruption)
+ * however caused and on any theory of liability, whether in contract, strict
+ * liability, or tort (including negligence or otherwise) arising in any way out
+ * of the use of this software, even if advised of the possibility of such damage.
+ *
+ */
+import Debug from 'debug';
 import DfuTransportPrn from './DfuTransportPrn';
 import { DfuError, ErrorCode } from './DfuError';
 
-const debug = require('debug')('dfu:noble');
+const debug = Debug('dfu:noble');
 
 // const noble = require('noble');
 
@@ -39,11 +79,6 @@ export default class DfuTransportNoble extends DfuTransportPrn {
 
         return new Promise((res, rej) => {
             setTimeout(() => {
-                //                 this.dfuControlCharacteristic.once('write', () => {
-                //                     debug(' wire --> ', bytesBuf);
-                //                     res();
-                //                 })
-
                 this.dfuControlCharacteristic.write(bytesBuf, false, err => {
                     if (err) {
                         rej(err);
@@ -64,13 +99,6 @@ export default class DfuTransportNoble extends DfuTransportPrn {
         debug(' data --> ', bytesBuf);
 
         return new Promise((res, rej) => {
-            //             setTimeout(()=>{
-
-            //                 this.dfuPacketCharacteristic.once('write', () => {
-            //                     debug(' wire --> ', bytesBuf);
-            //                     res();
-            //                 })
-
             this.dfuPacketCharacteristic.write(bytesBuf, true, err => {
                 if (err) {
                     rej(err);
@@ -82,24 +110,6 @@ export default class DfuTransportNoble extends DfuTransportPrn {
         });
     }
 
-    //     read() {
-    //         return new Promise((res, rej)=>{
-    //             this.dfuControlCharacteristic.read((err, data)=>{
-    //                 if (err) {
-    //                     rej(err);
-    //                 } else {
-    //         debug(' recv <-- ', data);
-    //                     res(this.parse(data));
-    //                 }
-    //             });
-    //         });
-    //     }
-
-    // Called whenever the control characteristic sends some bytes back
-    //     onData(bytes) {
-    //         debug('Got data: ', bytes);
-    //     }
-    //
     // Aux. Connects to this.peripheral, discovers services and characteristics,
     // and stores a reference into this.dfuControlCharacteristic and this.dfuPacketCharacteristic
     getCharacteristics() {
@@ -127,11 +137,9 @@ export default class DfuTransportNoble extends DfuTransportPrn {
 
                             if (characteristics[i].uuid === '8ec90001f3154f609fb8838830daea50') {
                                 this.dfuControlCharacteristic = characteristics[i];
-                                //                                 debug(characteristics[i]);
                             }
                             if (characteristics[i].uuid === '8ec90002f3154f609fb8838830daea50') {
                                 this.dfuPacketCharacteristic = characteristics[i];
-                                //                                 debug(characteristics[i]);
                             }
                         }
                         if (this.dfuControlCharacteristic && this.dfuPacketCharacteristic) {
@@ -156,11 +164,14 @@ export default class DfuTransportNoble extends DfuTransportPrn {
         this.readyPromise = Promise.race([
             this.getCharacteristics(),
             new Promise((res, rej) => {
-                setTimeout(() => rej(new DfuError(ErrorCode.ERROR_TIMEOUT_FETCHING_CHARACTERISTICS)), 500);
+                setTimeout(
+                    () => rej(new DfuError(ErrorCode.ERROR_TIMEOUT_FETCHING_CHARACTERISTICS)),
+                    500
+                );
             }),
         ])
             .then(() => {
-            // Subscribe to notifications on the control characteristic
+                // Subscribe to notifications on the control characteristic
                 debug('control characteristic:', this.dfuControlCharacteristic.uuid, this.dfuControlCharacteristic.properties);
 
                 return new Promise((res, rej) => {
@@ -169,7 +180,6 @@ export default class DfuTransportNoble extends DfuTransportPrn {
                         if (err) {
                             return rej(new DfuError(ErrorCode.ERROR_CAN_NOT_SUBSCRIBE_CHANGES));
                         }
-                        // this.dfuControlCharacteristic.on('data', this.onData.bind(this));
                         this.dfuControlCharacteristic.on('data', data => {
                             debug(' recv <-- ', data);
                             return this.onData(data);
@@ -179,7 +189,6 @@ export default class DfuTransportNoble extends DfuTransportPrn {
                 });
             })
             .then(() =>
-            // Set the PRN value
                 this.writeCommand(new Uint8Array([
                     0x02, // "Set PRN" opcode
                     // eslint-disable-next-line no-bitwise
@@ -191,35 +200,5 @@ export default class DfuTransportNoble extends DfuTransportPrn {
                     .then(this.assertPacket(0x02, 0)));
 
         return this.readyPromise;
-
-        //                 // Set PRN
-        //                 let result = this.writeCommand(new Uint8Array([
-        //                     0x02,  // "Set PRN" opcode
-        //                     this.prn >> 0 & 0xFF, // PRN LSB
-        //                     this.prn >> 8 & 0xFF, // PRN MSB
-        //                 ]))
-        //                 .then(this.read.bind(this))
-        //                 .then(this.assertPacket(0x02, 0))
-        //                 // Request MTU
-        //                 .then(()=>this.writeCommand(new Uint8Array([
-        //                     0x07    // "Request serial MTU" opcode
-        //                 ])))
-        //                 .then(this.read.bind(this))
-        //                 .then(this.assertPacket(0x07, 2))
-        //                 .then((bytes)=>{
-        // //                     debug('Got MTU: ', bytes);
-        //
-        //                     let mtu =
-        //                         bytes[1] * 256 +
-        //                         bytes[0];
-        //
-        //                     // Convert wire MTU into max size of SLIP-decoded data:
-        //                     this.mtu = Math.floor((mtu / 2) - 2);
-        // debug(`Wire MTU: ${mtu}; un-encoded data max size: ${this.mtu}`);
-        //                 });
-
-        //                 return res(result);
-        //                 return res();
-        //         });
     }
 }

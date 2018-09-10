@@ -22,10 +22,10 @@
  * 4. Any software provided in binary form under this license must not be reverse
  *    engineered, decompiled, modified and/or disassembled.
  *
- * THIS SOFTWARE IS PROVIDED BY NORDIC SEMICONDUCTOR ASA "AS IS" AND ANY EXPRESS OR
+ * THIS SOFTWARE IS PROVIDED BY Nordic Semiconductor ASA "AS IS" AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL NORDIC SEMICONDUCTOR ASA OR CONTRIBUTORS BE LIABLE
+ * DISCLAIMED. IN NO EVENT SHALL Nordic Semiconductor ASA OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
@@ -37,10 +37,7 @@
 'use strict';
 
 const SerialPort = require('serialport');
-
 const nrfDfu = require('../../dist/nrf-dfu.cjs');
-
-jest.setTimeout(20000);
 
 describe('The DFU Transport', async () => {
     let port;
@@ -54,7 +51,7 @@ describe('The DFU Transport', async () => {
                 throw new Error('No serial ports with a Segger are available');
             }
         });
-    }, 5000);
+    }, 10000);
 
     it('shall crate serial transport', async () => {
         const transportSerial = new nrfDfu.DfuTransportSerial(port);
@@ -62,7 +59,7 @@ describe('The DFU Transport', async () => {
         await new Promise(resolve => {
             port.close(resolve);
         });
-    }, 5000);
+    }, 10000);
 
     it('shall write data through serial transport', async () => {
         const transportSerial = new nrfDfu.DfuTransportSerial(port);
@@ -70,7 +67,7 @@ describe('The DFU Transport', async () => {
         await new Promise(resolve => {
             port.close(resolve);
         });
-    }, 5000);
+    }, 10000);
 
     it('shall get protocal version through serial transport', async () => {
         const transportSerial = new nrfDfu.DfuTransportSerial(port);
@@ -78,7 +75,7 @@ describe('The DFU Transport', async () => {
         await new Promise(resolve => {
             port.close(resolve);
         });
-    }, 5000);
+    }, 10000);
 
     it('shall get all firmware versions through serial transport', async () => {
         const transportSerial = new nrfDfu.DfuTransportSerial(port);
@@ -86,5 +83,5 @@ describe('The DFU Transport', async () => {
         await new Promise(resolve => {
             port.close(resolve);
         });
-    }, 5000);
+    }, 10000);
 });
