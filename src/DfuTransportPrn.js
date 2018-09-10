@@ -39,11 +39,12 @@
  */
 
 // FIXME: Should be `import {crc32} from 'crc'`, https://github.com/alexgorbatchev/node-crc/pull/50
+import Debug from 'debug';
 import crc32 from './util/crc32';
 import { DfuError, ErrorCode, ResponseErrorMessages, ExtendedErrorMessages } from './DfuError';
 import DfuAbstractTransport from './DfuAbstractTransport';
 
-const debug = require('debug')('dfu:prntransport');
+const debug = Debug('dfu:prntransport');
 
 /**
  * PRN-capable abstract DFU transport.

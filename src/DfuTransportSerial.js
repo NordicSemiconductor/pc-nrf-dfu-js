@@ -1,10 +1,49 @@
+/**
+ * copyright (c) 2015 - 2018, nordic semiconductor asa
+ *
+ * all rights reserved.
+ *
+ * redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * 1. redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ *
+ * 2. redistributions in binary form, except as embedded into a nordic
+ *    semiconductor asa integrated circuit in a product or a software update for
+ *    such product, must reproduce the above copyright notice, this list of
+ *    conditions and the following disclaimer in the documentation and/or other
+ *    materials provided with the distribution.
+ *
+ * 3. neither the name of nordic semiconductor asa nor the names of its
+ *    contributors may be used to endorse or promote products derived from this
+ *    software without specific prior written permission.
+ *
+ * 4. this software, with or without modification, must only be used with a
+ *    nordic semiconductor asa integrated circuit.
+ *
+ * 5. any software provided in binary form under this license must not be reverse
+ *    engineered, decompiled, modified and/or disassembled.
+ *
+ * this software is provided by nordic semiconductor asa "as is" and any express
+ * or implied warranties, including, but not limited to, the implied warranties
+ * of merchantability, noninfringement, and fitness for a particular purpose are
+ * disclaimed. in no event shall nordic semiconductor asa or contributors be
+ * liable for any direct, indirect, incidental, special, exemplary, or
+ * consequential damages (including, but not limited to, procurement of substitute
+ * goods or services; loss of use, data, or profits; or business interruption)
+ * however caused and on any theory of liability, whether in contract, strict
+ * liability, or tort (including negligence or otherwise) arising in any way out
+ * of the use of this software, even if advised of the possibility of such damage.
+ *
+ */
+
+import Debug from 'debug';
 import * as slip from './util/slip';
 import { DfuError, ErrorCode } from './DfuError';
-
 import DfuTransportPrn from './DfuTransportPrn';
 
-const debug = require('debug')('dfu:serial');
-
+const debug = Debug('dfu:serial');
 
 /**
  * Serial DFU transport. Supports serial DFU for devices connected
@@ -14,14 +53,11 @@ const debug = require('debug')('dfu:serial');
  * This needs to be given a `serialport` instance when instantiating.
  * Will encode actual requests with SLIP
  */
-
 export default class DfuTransportSerial extends DfuTransportPrn {
     constructor(serialPort, packetReceiveNotification = 16) {
         super(packetReceiveNotification);
-
         this.port = serialPort;
     }
-
 
     // Given a command (including opcode), perform SLIP encoding and send it
     // through the wire.
@@ -70,7 +106,6 @@ export default class DfuTransportSerial extends DfuTransportPrn {
         return new Promise((res, rej) => {
             debug('Opening serial port.');
 
-
             this.port.open(err => {
                 if (err) {
                     return rej(err);
@@ -105,19 +140,6 @@ export default class DfuTransportSerial extends DfuTransportPrn {
         if (this.readyPromise) {
             return this.readyPromise;
         }
-
-        // Ping
-        // let result = this._write(new Uint8Array([
-        //     0x09,   // "Ping" opcode
-        //     0xAB    // Ping ID
-        // ]))
-        // .then(this.read.bind(this))
-        // .then(this.assertPacket(0x09, 1))
-        // .then((bytes)=>{
-        //     if (bytes[0] !== 0xAB) {
-        //         throw new Error('Expected a ping ID of 0xAB, got ' + bytes + ' instead');
-        //     }
-        // })
 
         this.readyPromise = this.writeCommand(new Uint8Array([
             0x02, // "Set PRN" opcode

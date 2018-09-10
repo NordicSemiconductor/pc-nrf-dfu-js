@@ -37,15 +37,48 @@
 'use strict';
 
 const path = require('path');
+const SerialPort = require('serialport');
+
 const nrfDfu = require('../../dist/nrf-dfu.cjs');
 
-const testSoftDevicePath = path.resolve(__dirname, 'softdevice.zip');
+jest.setTimeout(20000);
 
-describe('The DFU Update', async () => {
-    it('shall load update from zip', async () => {
-        const updates = await nrfDfu.DfuUpdates.fromZipFilePath(testSoftDevicePath);
-        expect(updates).not.toBeNull();
-        expect(updates.initPacket).not.toBeNull();
-        expect(updates.firmwareImage).not.toBeNull();
-    });
+describe('The DFU Transport', async () => {
+    let port;
+
+    beforeEach(async () => {
+        await SerialPort.list().then(portList => {
+            const ports = portList.filter(p => p.vendorId === '1915');
+            if (ports && ports[0]) {
+                port = new SerialPort(ports[0].comName, { baudRate: 115200, autoOpen: false });
+            } else {
+                throw new Error('No serial ports with a Segger are available');
+            }
+        });
+    }, 5000);
+
+    it('shall crate serial transport', async () => {
+        const transportSerial = new nrfDfu.DfuTransportSerial(port);
+        expect(transportSerial).not.toBeNull();
+        await new Promise(resolve => {
+            port.close(resolve);
+        });
+    }, 5000);
+
+    it('shall write data through serial transport', async () => {
+        const transportSerial = new nrfDfu.DfuTransportSerial(port);
+        await expect(transportSerial.writeData('aa')).resolves.not.toBeNull();
+        await new Promise(resolve => {
+            port.close(resolve);
+        });
+    }, 5000);
+
+    it('shall get protocal version through serial transport', async () => {
+        const transportSerial = new nrfDfu.DfuTransportSerial(port);
+        expect(transportSerial.getProtocolVersion()).resolves.toBeNull();
+        await new Promise(resolve => {
+            port.close(resolve);
+        });
+    }, 5000);
+
 });

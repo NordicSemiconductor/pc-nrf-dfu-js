@@ -44,7 +44,6 @@ const testSoftDevicePath = path.resolve(__dirname, 'softdevice.zip');
 
 describe('the API', async () => {
     let port;
-        let lala;
     beforeAll(async () => {
         await SerialPort.list().then(ports => {
             ports = ports.filter(port => port.vendorId === '1915')
