@@ -39,6 +39,9 @@
 const SerialPort = require('serialport');
 const nrfDfu = require('../../dist/nrf-dfu.cjs');
 
+const testTimeout = 30000;
+const testDelay = 2000;
+
 describe('The DFU Transport', async () => {
     let port;
 
@@ -48,40 +51,40 @@ describe('The DFU Transport', async () => {
             if (ports && ports[0]) {
                 port = new SerialPort(ports[0].comName, { baudRate: 115200, autoOpen: false });
             } else {
-                throw new Error('No serial ports with a Segger are available');
+                throw new Error('No nordic serial device is available');
             }
         });
-    }, 10000);
+    }, testTimeout);
 
     it('shall crate serial transport', async () => {
         const transportSerial = new nrfDfu.DfuTransportSerial(port);
         expect(transportSerial).not.toBeNull();
         await new Promise(resolve => {
-            port.close(resolve);
+            port.close(() => setTimeout(resolve, testDelay));
         });
-    }, 10000);
+    }, testTimeout);
 
     it('shall write data through serial transport', async () => {
         const transportSerial = new nrfDfu.DfuTransportSerial(port);
-        await expect(transportSerial.writeData('aa')).resolves.not.toBeNull();
+        await expect(transportSerial.writeData('whatever')).resolves.not.toBeNull();
         await new Promise(resolve => {
-            port.close(resolve);
+            port.close(() => setTimeout(resolve, testDelay));
         });
-    }, 10000);
+    }, testTimeout);
 
     it('shall get protocal version through serial transport', async () => {
         const transportSerial = new nrfDfu.DfuTransportSerial(port);
         await expect(transportSerial.getProtocolVersion()).resolves.not.toBeNaN();
         await new Promise(resolve => {
-            port.close(resolve);
+            port.close(() => setTimeout(resolve, testDelay));
         });
-    }, 10000);
+    }, testTimeout);
 
     it('shall get all firmware versions through serial transport', async () => {
         const transportSerial = new nrfDfu.DfuTransportSerial(port);
         await expect(transportSerial.getAllFirmwareVersions()).resolves.not.toBeNull();
         await new Promise(resolve => {
-            port.close(resolve);
+            port.close(() => setTimeout(resolve, testDelay));
         });
-    }, 10000);
+    }, testTimeout);
 });

@@ -41,6 +41,8 @@ const SerialPort = require('serialport');
 const nrfDfu = require('../../dist/nrf-dfu.cjs');
 
 const testSoftDevicePath = path.resolve(__dirname, 'softdevice.zip');
+const testTimeout = 30000;
+const testDelay = 2000;
 
 describe('The DFU Operation', async () => {
     let port;
@@ -51,10 +53,10 @@ describe('The DFU Operation', async () => {
             if (ports && ports[0]) {
                 port = new SerialPort(ports[0].comName, { baudRate: 115200, autoOpen: false });
             } else {
-                throw new Error('No serial ports with a Segger are available');
+                throw new Error('No nordic serial device is available');
             }
         });
-    }, 5000);
+    }, testTimeout);
 
     it('shall dfu', async () => {
         expect(port).not.toBeNull();
@@ -63,26 +65,13 @@ describe('The DFU Operation', async () => {
 
         const dfu = new nrfDfu.DfuOperation(updates, serialTransport);
         await dfu.start(true)
-            .then(() => {
-                port.close();
+            .then(async () => {
+                await new Promise(resolve => {
+                    port.close(() => setTimeout(resolve, testDelay));
+                });
             })
             .catch(() => {
                 throw new Error('Test fails');
             });
-    }, 20000);
-
-    // it('shall dfu', async () => {
-    //     expect(port).not.toBeNull();
-
-    //     const updates = await nrfDfu.DfuUpdates.fromZipFilePath(testSoftDevicePath);
-    //     const serialTransport = new nrfDfu.DfuTransportSerial(port, 4);
-
-    //     const dfu = new nrfDfu.DfuOperation(updates, serialTransport);
-    //     dfu.start(true)
-    //         .then(() => {
-    //         })
-    //         .catch(() => {
-    //             throw new Error('Test fails');
-    //         });
-    // });
+    }, testTimeout);
 });

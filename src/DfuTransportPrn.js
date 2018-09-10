@@ -37,9 +37,8 @@
  * of the use of this software, even if advised of the possibility of such damage.
  *
  */
-// FIXME: Should be `import {crc32} from 'crc'`, https://github.com/alexgorbatchev/node-crc/pull/50
 import Debug from 'debug';
-import crc32 from './util/crc32';
+import { crc32 } from 'crc';
 import { DfuError, ErrorCode, ResponseErrorMessages, ExtendedErrorMessages } from './DfuError';
 import DfuAbstractTransport from './DfuAbstractTransport';
 
