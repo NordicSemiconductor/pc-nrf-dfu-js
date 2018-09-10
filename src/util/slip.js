@@ -43,7 +43,6 @@ export function encode(bytes, options) {
     o.bufferPadding = o.bufferPadding || 4; // Will be rounded to the nearest 4 bytes.
     const data = byteArray(bytes, o.offset, o.byteLength);
 
-    // eslint-disable-next-line no-bitwise
     const bufLen = (data.length + o.bufferPadding + 3) & ~0x03;
     let encoded = new Uint8Array(bufLen);
     let j = 1;

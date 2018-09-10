@@ -235,10 +235,10 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
             this.writeCommand(new Uint8Array([
                 0x01, // "Create object" opcode
                 type,
-                size & 0xFF, // eslint-disable-line no-bitwise
-                (size >> 8) & 0xFF, // eslint-disable-line no-bitwise
-                (size >> 16) & 0xFF, // eslint-disable-line no-bitwise
-                (size >> 24) & 0xFF, // eslint-disable-line no-bitwise
+                size & 0xFF,
+                (size >> 8) & 0xFF,
+                (size >> 16) & 0xFF,
+                (size >> 24) & 0xFF,
             ]))
                 .then(this.read.bind(this))
                 .then(this.assertPacket(0x01, 0)));

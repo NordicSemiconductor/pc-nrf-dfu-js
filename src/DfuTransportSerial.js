@@ -142,9 +142,7 @@ export default class DfuTransportSerial extends DfuTransportPrn {
 
         this.readyPromise = this.writeCommand(new Uint8Array([
             0x02, // "Set PRN" opcode
-            // eslint-disable-next-line no-bitwise
             this.prn & 0xFF, // PRN LSB
-            // eslint-disable-next-line no-bitwise
             (this.prn >> 8) & 0xFF, // PRN MSB
         ]))
             .then(this.read.bind(this))
