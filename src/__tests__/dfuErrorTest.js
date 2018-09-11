@@ -1,4 +1,4 @@
-/* Copyright (c) 2010 - 2017, Nordic Semiconductor ASA
+/* Copyright (c) 2010 - 2018, Nordic Semiconductor ASA
  *
  * All rights reserved.
  *
@@ -38,7 +38,7 @@
 
 const nrfDfu = require('../../dist/nrf-dfu.cjs');
 
-const testMessage = 'Expected 10 bytes to have been sent, Factual is 8 bytes.';
+const testMessage = 'Expected 10 bytes to have been sent, actual is 8 bytes.';
 
 describe('The DFU Error', async () => {
     it('shall carry error message', async () => {

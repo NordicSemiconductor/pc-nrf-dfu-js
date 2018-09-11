@@ -197,40 +197,41 @@ export class DfuError extends Error {
     constructor(code, message = undefined) {
         super();
         this.code = code;
-        this.message = this.getErrorMessage(code);
+        this.message = DfuError.getErrorMessage(code);
         if (message) {
             this.message += ` ${message}`;
         }
     }
 
-    getErrorMessage(code) {
+    static getErrorMessage(code) {
+        let errorMsg;
         const errorType = code >> 8;
 
         debug(`Error type is ${errorType}.`);
 
-        this.errorMsg = ErrorTypes[errorType];
-        if (!this.errorMsg) {
+        errorMsg = ErrorTypes[errorType];
+        if (!errorMsg) {
             throw new Error('Error type is unknown.');
         }
 
-        this.errorMsg += ': ';
+        errorMsg += ': ';
         switch (errorType) {
             case 0x00:
                 debug('This is an error message.');
-                this.errorMsg += ErrorMessages[code];
+                errorMsg += ErrorMessages[code];
                 break;
             case 0x01:
                 debug('This is a response error message.');
-                this.errorMsg += ResponseErrorMessages[code];
+                errorMsg += ResponseErrorMessages[code];
                 break;
             case 0x02:
                 debug('This is an extended error message.');
-                this.errorMsg += ExtendedErrorMessages[code];
+                errorMsg += ExtendedErrorMessages[code];
                 break;
             default:
                 debug('This is an unknown error message.');
         }
 
-        return this.errorMsg;
+        return errorMsg;
     }
 }

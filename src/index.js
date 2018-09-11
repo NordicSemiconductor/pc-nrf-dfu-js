@@ -44,7 +44,6 @@ import DfuTransportSerial from './DfuTransportSerial';
 import DfuTransportSlowSerial from './DfuTransportSlowSerial';
 import DfuTransportUsbSerial from './DfuTransportUsbSerial';
 import DfuTransportNoble from './DfuTransportNoble';
-import ProgressCounter from './ProgressCounter';
 import { DfuError, ErrorCode } from './DfuError';
 
 export {
@@ -57,5 +56,4 @@ export {
     DfuTransportNoble,
     DfuError,
     ErrorCode,
-    ProgressCounter,
 };
