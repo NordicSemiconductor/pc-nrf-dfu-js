@@ -44,8 +44,9 @@ const testSoftDevicePath = path.resolve(__dirname, 'softdevice.zip');
 describe('The DFU Update', async () => {
     it('shall load update from zip', async () => {
         const updates = await nrfDfu.DfuUpdates.fromZipFilePath(testSoftDevicePath);
-        expect(updates).not.toBeNull();
-        expect(updates.initPacket).not.toBeNull();
-        expect(updates.firmwareImage).not.toBeNull();
+        expect(updates.updates).not.toBeNull();
+        expect(updates.updates[0]).not.toBeNull();
+        expect(updates.updates[0].initPacket).not.toBeNull();
+        expect(updates.updates[0].firmwareImage).not.toBeNull();
     });
 });

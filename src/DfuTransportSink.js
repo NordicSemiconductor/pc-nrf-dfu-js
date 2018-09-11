@@ -38,7 +38,7 @@
  *
  */
 import Debug from 'debug';
-import { crc32 } from 'crc';
+import crc32 from './util/crc32';
 import { DfuError, ErrorCode } from './DfuError';
 import DfuAbstractTransport from './DfuAbstractTransport';
 

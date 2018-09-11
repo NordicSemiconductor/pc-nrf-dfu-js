@@ -14,7 +14,6 @@
     "lint": "eslint src/"
   },
   "dependencies": {
-    "crc": "^3.8.0",
     "jszip": "^3.1.4"
   },
   "peerDependencies": {
@@ -26,7 +25,6 @@
     "eslint-config-airbnb-base": "^12.1.0",
     "eslint-plugin-import": "^2.14.0",
     "eslint-plugin-react": "^7.11.1",
-    "jasmine": "^2.8.0",
     "jest": "^23.5.0",
     "jest-bamboo-formatter": "1.0.1",
     "jest-serializer-path": "^0.1.14",

@@ -37,7 +37,7 @@
  * of the use of this software, even if advised of the possibility of such damage.
  *
  */
-import { crc32 } from 'crc';
+import crc32 from './util/crc32';
 import { DfuError, ErrorCode } from './DfuError';
 
 const debug = require('debug')('dfu:transport');
