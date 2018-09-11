@@ -65,32 +65,40 @@ describe('The DFU Transport', () => {
     }, testTimeout);
 
     it('shall write data through serial transport', async () => {
+        expect(port).not.toBeNull();
         const transportSerial = new nrfDfu.DfuTransportSerial(port);
-        await expect(transportSerial.writeData('whatever')).resolves.not.toBeNull();
+        const result = await transportSerial.writeData('whatever');
+        expect(result).not.toBeNull();
         await new Promise(resolve => {
             port.close(() => setTimeout(resolve, testDelay));
         });
     }, testTimeout);
 
     it('shall get protocal version through serial transport', async () => {
+        expect(port).not.toBeNull();
         const transportSerial = new nrfDfu.DfuTransportSerial(port);
-        await expect(transportSerial.getProtocolVersion()).resolves.not.toBeNaN();
+        const result = await transportSerial.getProtocolVersion();
+        expect(result).not.toBeNaN();
         await new Promise(resolve => {
             port.close(() => setTimeout(resolve, testDelay));
         });
     }, testTimeout);
 
     it('shall get all firmware versions through serial transport', async () => {
+        expect(port).not.toBeNull();
         const transportSerial = new nrfDfu.DfuTransportSerial(port);
-        await expect(transportSerial.getAllFirmwareVersions()).resolves.not.toBeNull();
+        const result = await transportSerial.getAllFirmwareVersions();
+        expect(result).not.toBeNull();
         await new Promise(resolve => {
             port.close(() => setTimeout(resolve, testDelay));
         });
     }, testTimeout);
 
     it('shall abort', async () => {
+        expect(port).not.toBeNull();
         const transportSerial = new nrfDfu.DfuTransportSerial(port);
-        await expect(transportSerial.abort()).resolves.not.toBeNull();
+        const result  = await transportSerial.abort();
+        expect(result).not.toBeNull();
         await new Promise(resolve => {
             port.close(() => setTimeout(resolve, testDelay));
         });
