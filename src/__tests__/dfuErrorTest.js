@@ -40,12 +40,12 @@ const nrfDfu = require('../../dist/nrf-dfu.cjs');
 
 const testMessage = 'Expected 10 bytes to have been sent, actual is 8 bytes.';
 
-describe('The DFU Error', async () => {
-    it('shall carry error message', async () => {
+describe('The DFU Error', () => {
+    it('shall carry error message', () => {
         expect(new nrfDfu.DfuError(0x0100).message).not.toBeNull();
     });
 
-    it('shall display error message', async () => {
+    it('shall display error message', () => {
         expect(new nrfDfu.DfuError(0x0002, testMessage).message).toContain(testMessage);
     });
 });

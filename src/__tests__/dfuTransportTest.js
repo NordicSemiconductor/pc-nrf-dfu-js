@@ -40,9 +40,9 @@ const SerialPort = require('serialport');
 const nrfDfu = require('../../dist/nrf-dfu.cjs');
 
 const testTimeout = 30000;
-const testDelay = 2000;
+const testDelay = 3000;
 
-describe('The DFU Transport', async () => {
+describe('The DFU Transport', () => {
     let port;
 
     beforeEach(async () => {

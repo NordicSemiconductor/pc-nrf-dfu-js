@@ -41,7 +41,7 @@ const nrfDfu = require('../../dist/nrf-dfu.cjs');
 
 const testSoftDevicePath = path.resolve(__dirname, 'softdevice.zip');
 
-describe('The DFU Update', async () => {
+describe('The DFU Update', () => {
     it('shall load update from zip', async () => {
         const updates = await nrfDfu.DfuUpdates.fromZipFilePath(testSoftDevicePath);
         expect(updates.updates).not.toBeNull();

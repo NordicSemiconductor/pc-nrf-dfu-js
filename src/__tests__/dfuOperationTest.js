@@ -42,9 +42,9 @@ const nrfDfu = require('../../dist/nrf-dfu.cjs');
 
 const testSoftDevicePath = path.resolve(__dirname, 'softdevice.zip');
 const testTimeout = 30000;
-const testDelay = 2000;
+const testDelay = 3000;
 
-describe('The DFU Operation', async () => {
+describe('The DFU Operation', () => {
     let port;
 
     beforeEach(async () => {
