@@ -1,10 +1,48 @@
+/**
+ * copyright (c) 2015 - 2018, Nordic Semiconductor ASA
+ *
+ * all rights reserved.
+ *
+ * redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * 1. redistributions of source code must retain the above copyright notice, this
+ *    list of conditions and the following disclaimer.
+ *
+ * 2. redistributions in binary form, except as embedded into a nordic
+ *    semiconductor asa integrated circuit in a product or a software update for
+ *    such product, must reproduce the above copyright notice, this list of
+ *    conditions and the following disclaimer in the documentation and/or other
+ *    materials provided with the distribution.
+ *
+ * 3. neither the name of Nordic Semiconductor ASA nor the names of its
+ *    contributors may be used to endorse or promote products derived from this
+ *    software without specific prior written permission.
+ *
+ * 4. this software, with or without modification, must only be used with a
+ *    Nordic Semiconductor ASA integrated circuit.
+ *
+ * 5. any software provided in binary form under this license must not be reverse
+ *    engineered, decompiled, modified and/or disassembled.
+ *
+ * this software is provided by Nordic Semiconductor ASA "as is" and any express
+ * or implied warranties, including, but not limited to, the implied warranties
+ * of merchantability, noninfringement, and fitness for a particular purpose are
+ * disclaimed. in no event shall Nordic Semiconductor ASA or contributors be
+ * liable for any direct, indirect, incidental, special, exemplary, or
+ * consequential damages (including, but not limited to, procurement of substitute
+ * goods or services; loss of use, data, or profits; or business interruption)
+ * however caused and on any theory of liability, whether in contract, strict
+ * liability, or tort (including negligence or otherwise) arising in any way out
+ * of the use of this software, even if advised of the possibility of such damage.
+ *
+ */
+import Debug from 'debug';
 import * as slip from './util/slip';
 import { DfuError, ErrorCode } from './DfuError';
-
 import DfuTransportPrn from './DfuTransportPrn';
 
-const debug = require('debug')('dfu:serial');
-
+const debug = Debug('dfu:serial');
 
 /**
  * Serial DFU transport. Supports serial DFU for devices connected
@@ -14,14 +52,11 @@ const debug = require('debug')('dfu:serial');
  * This needs to be given a `serialport` instance when instantiating.
  * Will encode actual requests with SLIP
  */
-
 export default class DfuTransportSerial extends DfuTransportPrn {
     constructor(serialPort, packetReceiveNotification = 16) {
         super(packetReceiveNotification);
-
         this.port = serialPort;
     }
-
 
     // Given a command (including opcode), perform SLIP encoding and send it
     // through the wire.
@@ -70,7 +105,6 @@ export default class DfuTransportSerial extends DfuTransportPrn {
         return new Promise((res, rej) => {
             debug('Opening serial port.');
 
-
             this.port.open(err => {
                 if (err) {
                     return rej(err);
@@ -106,24 +140,9 @@ export default class DfuTransportSerial extends DfuTransportPrn {
             return this.readyPromise;
         }
 
-        // Ping
-        // let result = this._write(new Uint8Array([
-        //     0x09,   // "Ping" opcode
-        //     0xAB    // Ping ID
-        // ]))
-        // .then(this.read.bind(this))
-        // .then(this.assertPacket(0x09, 1))
-        // .then((bytes)=>{
-        //     if (bytes[0] !== 0xAB) {
-        //         throw new Error('Expected a ping ID of 0xAB, got ' + bytes + ' instead');
-        //     }
-        // })
-
         this.readyPromise = this.writeCommand(new Uint8Array([
             0x02, // "Set PRN" opcode
-            // eslint-disable-next-line no-bitwise
             this.prn & 0xFF, // PRN LSB
-            // eslint-disable-next-line no-bitwise
             (this.prn >> 8) & 0xFF, // PRN MSB
         ]))
             .then(this.read.bind(this))
@@ -223,14 +242,14 @@ export default class DfuTransportSerial extends DfuTransportPrn {
             .then(this.read.bind(this))
             .then(this.assertPacket(0x0B, 13))
             .then(bytes => {
-            // Decode little-endian fields, by using a DataView with the
-            // same buffer *and* offset than the Uint8Array for the packet payload
+                // Decode little-endian fields, by using a DataView with the
+                // same buffer *and* offset than the Uint8Array for the packet payload
                 const dataView = new DataView(bytes.buffer, bytes.byteOffset);
                 let imgType = dataView.getUint8(0, true);
 
                 switch (imgType) {
                     case 0xFF:
-                    // Meaning "no image at this index"
+                        // Meaning "no image at this index"
                         return false;
                     case 0:
                         imgType = 'SoftDevice';
