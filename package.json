@@ -10,7 +10,7 @@
   "license": "Propietary",
   "scripts": {
     "rollup": "rollup -c rollup.config.js",
-    "test": "rollup -c rollup.config.js && jest --detectOpenHandles --runInBand",
+    "test": "rollup -c rollup.config.js && DEBUG=dfu:test jest --detectOpenHandles --runInBand",
     "lint": "eslint src/"
   },
   "dependencies": {
