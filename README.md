@@ -98,10 +98,10 @@ The project is using `rollup.js`, so the following command is needed to run the 
 
 ### Test
 
-The project comes with automated integration tests in the `test` directory. In order to run the test, nRF52840 development dongle must be attached to the PC on CDC ACM ports.
-To run it on the build server, the environment variable `DFU_SERIAL_NUMBER` need to be set to specify a certain nRF52840 dongle.
-Or if it is not specified, then the first found nRF52840 dongle will be used for the test.
-Otherwise, the test will be failed.
+The project comes with automated integration tests in the `test` directory. In order to run the test, nRF52840 development kit must be attached to the PC on CDC ACM port or nRF52840 dongle must be attached to the PC.
+Meanwhile, the environment variable `DFU_SERIAL_NUMBER` need to be set to specify a certain nRF52840 dongle.
+Or if it is not specified, then the first found nRF52840 dongle by `SerialOPort` will be used for the test.
+Otherwise, the test will fail.
 
 To run the tests:
 
