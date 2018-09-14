@@ -36,41 +36,20 @@
 
 'use strict';
 
-const path = require('path');
 const SerialPort = require('serialport');
-const nrfDfu = require('../../dist/nrf-dfu.cjs');
 
-const testSoftDevicePath = path.resolve(__dirname, 'softdevice.zip');
-const testTimeout = 30000;
-const testDelay = 3000;
-
-describe('The DFU Operation', () => {
+module.exports.findPort = async serialNumber => {
     let port;
-
-    beforeEach(async () => {
-        await SerialPort.list().then(portList => {
-            const ports = portList.filter(p => p.vendorId === '1915');
-            if (ports && ports[0]) {
-                port = new SerialPort(ports[0].comName, { baudRate: 115200, autoOpen: false });
-            } else {
-                throw new Error('No nordic serial device is available');
-            }
-        });
-    }, testTimeout);
-
-    it('shall dfu', async () => {
-        expect(port).not.toBeNull();
-        const updates = await nrfDfu.DfuUpdates.fromZipFilePath(testSoftDevicePath);
-        const serialTransport = new nrfDfu.DfuTransportSerial(port, 4);
-        const dfu = new nrfDfu.DfuOperation(updates, serialTransport);
-        await dfu.start(true)
-            .then(async () => {
-                await new Promise(resolve => {
-                    port.close(() => setTimeout(resolve, testDelay));
-                });
-            })
-            .catch(() => {
-                throw new Error('Test fails');
-            });
-    }, testTimeout);
-});
+    await SerialPort.list().then(portList => {
+        const ports = portList.filter(p => p.vendorId === '1915');
+        const testPort = ports.find(p => p.serialNumber === serialNumber);
+        if (testPort) {
+            port = new SerialPort(testPort.comName, { baudRate: 115200, autoOpen: false });
+        } else if (ports && ports[0]) {
+            port = new SerialPort(ports[0].comName, { baudRate: 115200, autoOpen: false });
+        } else {
+            throw new Error('No nordic serial device is available');
+        }
+    });
+    return port;
+};

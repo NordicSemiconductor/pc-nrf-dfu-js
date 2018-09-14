@@ -36,16 +36,35 @@
 
 'use strict';
 
-const nrfDfu = require('../../dist/nrf-dfu.cjs');
+const path = require('path');
+const nrfDfu = require('../dist/nrf-dfu.cjs');
+const { findPort } = require('./util/common');
 
-const testMessage = 'Expected 10 bytes to have been sent, actual is 8 bytes.';
+const testSoftDevicePath = path.resolve(__dirname, 'data', 'softdevice.zip');
+const testTimeout = 30000;
+const testDelay = 3000;
+const testSerialNumber = process.env.DFU_SERIAL_NUMBER;
 
-describe('The DFU Error', () => {
-    it('shall carry error message', () => {
-        expect(new nrfDfu.DfuError(0x0100).message).not.toBeNull();
-    });
+describe('The DFU Operation', () => {
+    let port;
 
-    it('shall display error message', () => {
-        expect(new nrfDfu.DfuError(0x0002, testMessage).message).toContain(testMessage);
-    });
+    beforeEach(async () => {
+        port = await findPort(testSerialNumber);
+    }, testTimeout);
+
+    it('shall dfu', async () => {
+        expect(port).not.toBeNull();
+        const updates = await nrfDfu.DfuUpdates.fromZipFilePath(testSoftDevicePath);
+        const serialTransport = new nrfDfu.DfuTransportSerial(port, 4);
+        const dfu = new nrfDfu.DfuOperation(updates, serialTransport);
+        await dfu.start(true)
+            .then(async () => {
+                await new Promise(resolve => {
+                    port.close(() => setTimeout(resolve, testDelay));
+                });
+            })
+            .catch(() => {
+                throw new Error('Test fails');
+            });
+    }, testTimeout);
 });
