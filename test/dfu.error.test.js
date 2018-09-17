@@ -36,41 +36,16 @@
 
 'use strict';
 
-const path = require('path');
-const SerialPort = require('serialport');
-const nrfDfu = require('../../dist/nrf-dfu.cjs');
+const nrfDfu = require('../dist/nrf-dfu.cjs');
 
-const testSoftDevicePath = path.resolve(__dirname, 'softdevice.zip');
-const testTimeout = 30000;
-const testDelay = 3000;
+const testMessage = 'Expected 10 bytes to have been sent, actual is 8 bytes.';
 
-describe('The DFU Operation', () => {
-    let port;
+describe('The DFU Error', () => {
+    it('shall carry error message', () => {
+        expect(new nrfDfu.DfuError(0x0100).message).not.toBeNull();
+    });
 
-    beforeEach(async () => {
-        await SerialPort.list().then(portList => {
-            const ports = portList.filter(p => p.vendorId === '1915');
-            if (ports && ports[0]) {
-                port = new SerialPort(ports[0].comName, { baudRate: 115200, autoOpen: false });
-            } else {
-                throw new Error('No nordic serial device is available');
-            }
-        });
-    }, testTimeout);
-
-    it('shall dfu', async () => {
-        expect(port).not.toBeNull();
-        const updates = await nrfDfu.DfuUpdates.fromZipFilePath(testSoftDevicePath);
-        const serialTransport = new nrfDfu.DfuTransportSerial(port, 4);
-        const dfu = new nrfDfu.DfuOperation(updates, serialTransport);
-        await dfu.start(true)
-            .then(async () => {
-                await new Promise(resolve => {
-                    port.close(() => setTimeout(resolve, testDelay));
-                });
-            })
-            .catch(() => {
-                throw new Error('Test fails');
-            });
-    }, testTimeout);
+    it('shall display error message', () => {
+        expect(new nrfDfu.DfuError(0x0002, testMessage).message).toContain(testMessage);
+    });
 });

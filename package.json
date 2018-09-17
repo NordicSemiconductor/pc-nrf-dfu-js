@@ -10,7 +10,7 @@
   "license": "Propietary",
   "scripts": {
     "rollup": "rollup -c rollup.config.js",
-    "test": "rollup -c rollup.config.js && jest --detectOpenHandles --runInBand src",
+    "test": "rollup -c rollup.config.js && DEBUG=dfu:test jest --detectOpenHandles --runInBand",
     "lint": "eslint src/"
   },
   "dependencies": {
@@ -36,5 +36,10 @@
     "rollup-plugin-node-globals": "^1.1.0",
     "rollup-plugin-node-resolve": "^3.0.0",
     "serialport": "^6.2.0"
+  },
+  "jest": {
+    "testMatch": [
+      "**/test/?(*.)+(test).js?(x)"
+    ]
   }
 }

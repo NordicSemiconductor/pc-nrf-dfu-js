@@ -36,24 +36,18 @@
 
 'use strict';
 
-const SerialPort = require('serialport');
-const nrfDfu = require('../../dist/nrf-dfu.cjs');
+const nrfDfu = require('../dist/nrf-dfu.cjs');
+const { findPort } = require('./util/common');
 
 const testTimeout = 30000;
 const testDelay = 3000;
+const testSerialNumber = process.env.DFU_SERIAL_NUMBER;
 
 describe('The DFU Transport', () => {
     let port;
 
     beforeEach(async () => {
-        await SerialPort.list().then(portList => {
-            const ports = portList.filter(p => p.vendorId === '1915');
-            if (ports && ports[0]) {
-                port = new SerialPort(ports[0].comName, { baudRate: 115200, autoOpen: false });
-            } else {
-                throw new Error('No nordic serial device is available');
-            }
-        });
+        port = await findPort(testSerialNumber);
     }, testTimeout);
 
     it('shall crate serial transport', async () => {

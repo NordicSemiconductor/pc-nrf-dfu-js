@@ -37,9 +37,9 @@
 'use strict';
 
 const path = require('path');
-const nrfDfu = require('../../dist/nrf-dfu.cjs');
+const nrfDfu = require('../dist/nrf-dfu.cjs');
 
-const testSoftDevicePath = path.resolve(__dirname, 'softdevice.zip');
+const testSoftDevicePath = path.resolve(__dirname, 'data', 'softdevice.zip');
 
 describe('The DFU Update', () => {
     it('shall load update from zip', async () => {
