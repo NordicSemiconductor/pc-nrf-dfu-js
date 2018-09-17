@@ -8,12 +8,8 @@ This module is primarily used by the [nRF Connect](https://github.com/NordicSemi
 
 The following devices are supported:
 
-* JLink:
-    * PCA10028 nRF51 Development Kit
-    * PCA10031 nRF51 Dongle
-    * PCA10040 nRF52 Development Kit
-    * PCA10056 nRF52 Development Kit
 * USB SDFU:
+    * PCA10056 nRF52 Development Kit
     * PCA10059 nRF52 Dongle
 
 ## Installation
