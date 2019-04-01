@@ -44,6 +44,7 @@ import DfuTransportSerial from './DfuTransportSerial';
 import DfuTransportSlowSerial from './DfuTransportSlowSerial';
 import DfuTransportUsbSerial from './DfuTransportUsbSerial';
 import DfuTransportNoble from './DfuTransportNoble';
+import DfuTransportNfc from './DfuTransportNfc';
 import { DfuError, ErrorCode } from './DfuError';
 
 export {
@@ -54,6 +55,7 @@ export {
     DfuTransportUsbSerial,
     DfuTransportSlowSerial,
     DfuTransportNoble,
+    DfuTransportNfc,
     DfuError,
     ErrorCode,
 };
