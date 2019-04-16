@@ -1,11 +1,27 @@
-pool: server
-steps:
-- task: InvokeRESTAPI@1
-  displayName: Test
-  inputs:
-    connectionType: 'connectedServiceName'
-    serviceConnection: 'waylandJenkins'
-    method: 'POST'
-    urlSuffix: 'view/test/job/pc-nrf-dfu-js-test/buildWithParameters?BRANCH=$(Build.SourceBranch)&VSTS_URL=$(system.CollectionUri)&TOKEN=$(system.AccessToken)&PROJECT_ID=$(system.teamProjectId)&HUB_NAME=$(system.hostType)&PLAN_ID=$(system.planId)&TASK_ID=$(system.taskInstanceId)&JOB_ID=$(system.jobId)'
-    waitForCompletion: 'true'
-  condition: ne(variables['Build.Reason'], 'PullRequest')
+jobs:
+- job: Build
+  pool:
+    vmImage: 'Ubuntu-16.04'
+  steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: 10
+  - script: |
+      npm i
+      npm run rollup
+
+- job: Test
+  dependsOn: [
+    Build,
+  ]
+  pool: server
+  steps:
+  - task: InvokeRESTAPI@1
+    displayName: Test
+    inputs:
+      connectionType: 'connectedServiceName'
+      serviceConnection: 'waylandJenkins'
+      method: 'POST'
+      urlSuffix: 'view/test/job/pc-nrf-dfu-js-test/buildWithParameters?BRANCH=$(Build.SourceBranch)&VSTS_URL=$(system.CollectionUri)&TOKEN=$(system.AccessToken)&PROJECT_ID=$(system.teamProjectId)&HUB_NAME=$(system.hostType)&PLAN_ID=$(system.planId)&TASK_ID=$(system.taskInstanceId)&JOB_ID=$(system.jobId)'
+      waitForCompletion: 'true'
+    condition: ne(variables['Build.Reason'], 'PullRequest')
