@@ -1,4 +1,6 @@
 # nRF DFU
+
+[![Build Status](https://dev.azure.com/NordicSemiconductor/Wayland/_apis/build/status/pc-nrf-dfu-js?branchName=master)](https://dev.azure.com/NordicSemiconductor/Wayland/_build/latest?definitionId=17&branchName=master)
 [![License](https://img.shields.io/badge/license-Modified%20BSD%20License-blue.svg)](LICENSE)
 
 `pc-nrf-dfu-js` is a Javascript module which provides DFU (Device Firmware Upgrade) via USB CDC ACM transport for Nordic devices.
