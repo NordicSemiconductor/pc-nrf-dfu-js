@@ -34,7 +34,7 @@ Linux requires correct permissions to access these devices. For this purpose ple
 ## Usage
 
 ```js
-import { DfuUpdates, DfuTransportSerial, DfuOperation } from 'nrf-device-setup';
+import { DfuUpdates, DfuTransportSerial, DfuOperation } from 'pc-nrf-dfu-js';
 
 // Create DfuUpdates
 const updates = await DfuUpdates.fromZipFilePath(firmwarePath);
