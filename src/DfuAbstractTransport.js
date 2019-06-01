@@ -120,7 +120,7 @@ export default class DfuAbstractTransport {
                     debug(`Payload partially transferred sucessfully, continuing from offset ${offset}.`);
 
                     // Send the remainder of a half-finished chunk
-                    const end = (offset + chunkSize) - (offset % chunkSize);
+                    const end = Math.min(bytes.length, (offset + chunkSize) - (offset % chunkSize));
 
                     return this.sendAndExecutePayloadChunk(
                         type, bytes, offset,
