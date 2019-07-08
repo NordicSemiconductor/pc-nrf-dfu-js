@@ -37,6 +37,7 @@
  * of the use of this software, even if advised of the possibility of such damage.
  *
  */
+
 import Debug from 'debug';
 import DfuTransportPrn from './DfuTransportPrn';
 import { DfuError, ErrorCode } from './DfuError';
@@ -186,14 +187,15 @@ export default class DfuTransportNoble extends DfuTransportPrn {
                     });
                 });
             })
-            .then(() =>
+            .then(() => (
                 this.writeCommand(new Uint8Array([
                     0x02, // "Set PRN" opcode
                     this.prn & 0xFF, // PRN LSB
                     (this.prn >> 8) & 0xFF, // PRN MSB
                 ]))
                     .then(this.read.bind(this))
-                    .then(this.assertPacket(0x02, 0)));
+                    .then(this.assertPacket(0x02, 0))
+            ));
 
         return this.readyPromise;
     }

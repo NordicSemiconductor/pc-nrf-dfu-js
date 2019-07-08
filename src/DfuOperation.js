@@ -54,6 +54,7 @@
  * doing things such as service discovery, buttonless BLE DFU initialization, or claiming
  * a USB interface of a USB device.
  */
+
 export default class DfuOperation {
     constructor(dfuUpdates, dfuTransport, autoStart = false) {
         this.updates = dfuUpdates.updates;

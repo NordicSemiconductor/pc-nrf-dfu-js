@@ -1,6 +1,6 @@
 {
   "name": "pc-nrf-dfu-js",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "JS implementation of the nRF DFU protocol",
   "esnext:main": "src/index.js",
   "main": "dist/nrf-dfu.cjs.js",
@@ -10,32 +10,30 @@
   "license": "Propietary",
   "scripts": {
     "rollup": "rollup -c rollup.config.js",
-    "test": "rollup -c rollup.config.js && DEBUG=dfu:test jest --detectOpenHandles --runInBand",
+    "test": "rollup -c rollup.config.js && jest --detectOpenHandles --runInBand",
     "lint": "eslint src/"
   },
-  "dependencies": {
-    "jszip": "^3.1.4"
-  },
   "peerDependencies": {
-    "serialport": "^6.2.0"
+    "serialport": "^7.1.5"
   },
   "devDependencies": {
-    "debug": "^3.1.0",
-    "eslint": "^4.15.0",
-    "eslint-config-airbnb-base": "^12.1.0",
-    "eslint-plugin-import": "^2.14.0",
-    "eslint-plugin-react": "^7.11.1",
-    "jest": "^23.5.0",
+    "debug": "^4.1.1",
+    "eslint": "^6.0.1",
+    "eslint-config-airbnb-base": "^13.2.0",
+    "eslint-plugin-import": "^2.18.0",
+    "eslint-plugin-react": "^7.14.2",
+    "jest": "^24.8.0",
     "pc-nrfconnect-build": "git+https://github.com/NordicPlayground/pc-nrfconnect-build.git#semver:^0.0.1",
     "jest-bamboo-formatter": "1.0.1",
-    "jest-serializer-path": "^0.1.14",
-    "rollup": "^0.50.0",
-    "rollup-plugin-commonjs": "^8.2.1",
-    "rollup-plugin-eslint": "^4.0.0",
+    "jest-serializer-path": "^0.1.15",
+    "jszip": "^3.2.2",
+    "rollup": "^1.16.6",
+    "rollup-plugin-commonjs": "^10.0.1",
+    "rollup-plugin-eslint": "^7.0.0",
     "rollup-plugin-node-builtins": "^2.1.2",
-    "rollup-plugin-node-globals": "^1.1.0",
-    "rollup-plugin-node-resolve": "^3.0.0",
-    "serialport": "^6.2.0"
+    "rollup-plugin-node-globals": "^1.4.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "serialport": "^7.1.5"
   },
   "jest": {
     "testMatch": [

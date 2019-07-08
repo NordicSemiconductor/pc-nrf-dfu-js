@@ -27,14 +27,15 @@ const { Buffer } = require('buffer');
 
 let castToBytes;
 
-if (typeof Uint8Array !== 'undefined' && Uint8Array.from &&
-    typeof TextDecoder !== 'undefined') {
+if (typeof Uint8Array !== 'undefined' && Uint8Array.from
+    && typeof TextDecoder !== 'undefined') {
     const utf8Decoder = new TextDecoder('utf-8');
 
     castToBytes = arr => {
         if (arr instanceof Uint8Array) {
             return arr;
-        } else if (typeof arr === 'string') {
+        }
+        if (typeof arr === 'string') {
             return utf8Decoder(arr);
         }
         return Uint8Array.from(arr);

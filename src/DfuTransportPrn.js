@@ -37,9 +37,12 @@
  * of the use of this software, even if advised of the possibility of such damage.
  *
  */
+
 import Debug from 'debug';
 import crc32 from './util/crc32';
-import { DfuError, ErrorCode, ResponseErrorMessages, ExtendedErrorMessages } from './DfuError';
+import {
+    DfuError, ErrorCode, ResponseErrorMessages, ExtendedErrorMessages,
+} from './DfuError';
 import DfuAbstractTransport from './DfuAbstractTransport';
 
 const debug = Debug('dfu:prntransport');
@@ -231,7 +234,7 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
     createObject(type, size) {
         debug(`CreateObject type ${type}, size ${size}`);
 
-        return this.ready().then(() =>
+        return this.ready().then(() => (
             this.writeCommand(new Uint8Array([
                 0x01, // "Create object" opcode
                 type,
@@ -241,13 +244,15 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
                 (size >> 24) & 0xFF,
             ]))
                 .then(this.read.bind(this))
-                .then(this.assertPacket(0x01, 0)));
+                .then(this.assertPacket(0x01, 0))
+        ));
     }
 
     writeObject(bytes, crcSoFar, offsetSoFar) {
         debug('WriteObject');
-        return this.ready().then(() =>
-            this.writeObjectPiece(bytes, crcSoFar, offsetSoFar, 0));
+        return this.ready().then(() => (
+            this.writeObjectPiece(bytes, crcSoFar, offsetSoFar, 0)
+        ));
     }
 
     // Sends *one* write operation (with up to this.mtu bytes of un-encoded data)
@@ -297,7 +302,7 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
 
     // Reads a PRN CRC response and returns the offset/CRC pair
     readCrc() {
-        return this.ready().then(() =>
+        return this.ready().then(() => (
             this.read()
                 .then(this.assertPacket(0x03, 8))
                 .then(bytes => {
@@ -318,33 +323,36 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
                     // }
 
                     return [offset, crc];
-                }));
+                })
+        ));
     }
 
     crcObject() {
         debug('Request CRC explicitly');
 
-        return this.ready().then(() =>
+        return this.ready().then(() => (
             this.writeCommand(new Uint8Array([
                 0x03, // "CRC" opcode
             ]))
-                .then(this.readCrc.bind(this)));
+                .then(this.readCrc.bind(this))
+        ));
     }
 
     executeObject() {
         debug('Execute (mark payload chunk as ready)');
-        return this.ready().then(() =>
+        return this.ready().then(() => (
             this.writeCommand(new Uint8Array([
                 0x04, // "Execute" opcode
             ]))
                 .then(this.read.bind(this))
-                .then(this.assertPacket(0x04, 0)));
+                .then(this.assertPacket(0x04, 0))
+        ));
     }
 
     selectObject(type) {
         debug('Select (report max size and current offset/crc)');
 
-        return this.ready().then(() =>
+        return this.ready().then(() => (
             this.writeCommand(new Uint8Array([
                 0x06, // "Select object" opcode
                 type,
@@ -359,14 +367,16 @@ export default class DfuTransportPrn extends DfuAbstractTransport {
                     const crc = bytesView.getUint32(bytes.byteOffset + 8, true);
                     debug(`selected ${type}: offset ${offset}, crc ${crc}, max size ${chunkSize}`);
                     return [offset, crc, chunkSize];
-                }));
+                })
+        ));
     }
 
     abortObject() {
         debug('Abort (mark payload chunk as ready)');
-        return this.ready().then(() =>
+        return this.ready().then(() => (
             this.writeCommand(new Uint8Array([
                 0x0C, // "Abort" opcode
-            ])));
+            ]))
+        ));
     }
 }

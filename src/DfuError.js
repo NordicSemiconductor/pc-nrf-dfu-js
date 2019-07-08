@@ -37,6 +37,7 @@
  * of the use of this software, even if advised of the possibility of such damage.
  *
  */
+
 import Debug from 'debug';
 
 const debug = Debug('dfu:error');
