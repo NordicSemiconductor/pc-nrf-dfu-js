@@ -37,6 +37,7 @@
  * of the use of this software, even if advised of the possibility of such damage.
  *
  */
+
 import DfuOperation from './DfuOperation';
 import DfuUpdates from './DfuUpdates';
 import DfuTransportSink from './DfuTransportSink';

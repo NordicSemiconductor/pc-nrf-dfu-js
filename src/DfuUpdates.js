@@ -37,9 +37,11 @@
  * of the use of this software, even if advised of the possibility of such damage.
  *
  */
-import * as JSZip from 'jszip';
+
 import fs from 'fs';
 import Debug from 'debug';
+
+const JSZip = require('jszip/dist/jszip');
 
 const debug = Debug('dfu:updates');
 
@@ -124,7 +126,7 @@ export default class DfuUpdates {
      */
     static fromZipFile(zipBytes) {
         return (new JSZip()).loadAsync(zipBytes)
-            .then(zippedFiles =>
+            .then(zippedFiles => (
                 zippedFiles.file('manifest.json').async('text').then(manifestString => {
                     debug('Unzipped manifest: ', manifestString);
 
@@ -151,6 +153,7 @@ export default class DfuUpdates {
 
                     return Promise.all(updates)
                         .then(resolvedUpdates => new DfuUpdates(resolvedUpdates));
-                }));
+                })
+            ));
     }
 }
