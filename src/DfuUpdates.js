@@ -40,8 +40,7 @@
 
 import fs from 'fs';
 import Debug from 'debug';
-
-const JSZip = require('jszip/dist/jszip');
+import JSZip from 'jszip/dist/jszip';
 
 const debug = Debug('dfu:updates');
 
