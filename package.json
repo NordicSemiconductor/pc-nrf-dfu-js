@@ -1,11 +1,10 @@
 {
   "name": "pc-nrf-dfu-js",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "JS implementation of the nRF DFU protocol",
   "esnext:main": "src/index.js",
   "main": "dist/nrf-dfu.cjs.js",
   "module": "src/index.js",
-  "browser": "dist/nrf-dfu.browser.js",
   "author": "Iván Sánchez Ortega <ivan@sanchezortega.es>",
   "license": "Propietary",
   "scripts": {
