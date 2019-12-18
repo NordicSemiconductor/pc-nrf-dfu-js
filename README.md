@@ -5,7 +5,7 @@
 
 `pc-nrf-dfu-js` is a Javascript module which provides DFU (Device Firmware Upgrade) via USB CDC ACM transport for Nordic devices.
 
-This module is primarily used by the [nRF Connect](https://github.com/NordicSemiconductor/pc-nrfconnect-core) framework and
+This module is primarily used by the [nRF Connect](https://github.com/NordicSemiconductor/pc-nrfconnect-launcher) framework and
 [nRF Device Setup]
 
 The following devices are supported:
@@ -26,7 +26,7 @@ $ npm install pc-nrf-dfu-js
 
 ##### Windows
 
-In order to access Nordic USB devices on Windows, specific device drivers must be installed. The device drivers are automatically installed by the nRF Connect installer, starting from version 2.4. The drivers can also be found [here](https://github.com/NordicSemiconductor/pc-nrfconnect-core/tree/master/build/drivers).
+In order to access Nordic USB devices on Windows, specific device drivers must be installed. The device drivers are automatically installed by the nRF Connect installer, starting from version 2.4. The drivers can also be found [here](https://github.com/NordicSemiconductor/pc-nrfconnect-launcher/tree/master/build/drivers).
 
 ##### Linux
 Linux requires correct permissions to access these devices. For this purpose please install udev rules from [nrf-udev](https://github.com/NordicSemiconductor/nrf-udev) repository, follow instructions there.
