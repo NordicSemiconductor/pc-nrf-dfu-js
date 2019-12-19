@@ -128,7 +128,7 @@ export const ErrorMessages = {
     [ErrorCode.ERROR_CAN_NOT_INIT_PRN_TRANSPORT]: 'Cannot instantiate DfuTransportPrn, use a concrete subclass instead.',
     [ErrorCode.ERROR_CAN_NOT_USE_HIGHER_PRN]: 'DFU procotol cannot use a PRN higher than 0xFFFF.',
     [ErrorCode.ERROR_READ_CONFLICT]: 'DFU transport tried to read() while another read() was still waiting',
-    [ErrorCode.ERROR_TIMEOUT_READING_SERIAL]: 'Timeout while reading from serial transport. See https://github.com/NordicSemiconductor/pc-nrfconnect-core/blob/master/doc/serial-timeout-troubleshoot.md',
+    [ErrorCode.ERROR_TIMEOUT_READING_SERIAL]: 'Timeout while reading from serial transport. See https://github.com/NordicSemiconductor/pc-nrfconnect-launcher/blob/master/doc/serial-timeout-troubleshoot.md',
     [ErrorCode.ERROR_RECEIVE_TWO_MESSAGES]: 'DFU transport received two messages at once',
     [ErrorCode.ERROR_RESPONSE_NOT_START_WITH_0x60]: 'Response from DFU target did not start with 0x60',
     [ErrorCode.ERROR_ASSERT_EMPTY_RESPONSE]: 'Tried to assert an empty parsed response',
