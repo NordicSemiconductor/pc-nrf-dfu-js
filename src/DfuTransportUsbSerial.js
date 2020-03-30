@@ -87,7 +87,7 @@ export default class DfuTransportUsbSerial extends DfuTransportSerial {
                     .then(ports => {
                         const port = ports.find(p => p.serialNumber === this.serialNumber);
                         if (port) {
-                            debug(`Found port ${port.comName} with serial number ${this.serialNumber}`);
+                            debug(`Found port ${port.path} with serial number ${this.serialNumber}`);
                             res(port);
                         } else if (retryCount < 50) {
                             retryCount += 1;
@@ -110,7 +110,7 @@ export default class DfuTransportUsbSerial extends DfuTransportSerial {
         }
         return this.findPort()
             .then(port => {
-                this.port = new SerialPort(port.comName, { baudRate: 115200, autoOpen: false });
+                this.port = new SerialPort(port.path, { baudRate: 115200, autoOpen: false });
                 return super.open();
             });
     }

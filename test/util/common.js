@@ -46,11 +46,11 @@ module.exports.findPort = async serialNumber => {
         const testPort = ports.find(p => p.serialNumber === serialNumber);
         if (testPort) {
             debug('Test serial port is found by serial number: ', serialNumber);
-            port = new SerialPort(testPort.comName, { baudRate: 115200, autoOpen: false });
+            port = new SerialPort(testPort.path, { baudRate: 115200, autoOpen: false });
         } else if (ports && ports[0]) {
             debug('Test serial port is not found by serial number: ', serialNumber);
             debug('Try to use the first found port.');
-            port = new SerialPort(ports[0].comName, { baudRate: 115200, autoOpen: false });
+            port = new SerialPort(ports[0].path, { baudRate: 115200, autoOpen: false });
         } else {
             throw new Error('No nordic serial device is available');
         }
