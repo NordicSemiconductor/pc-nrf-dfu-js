@@ -6,7 +6,7 @@
 `pc-nrf-dfu-js` is a Javascript module which provides DFU (Device Firmware Upgrade) via USB CDC ACM transport for Nordic devices.
 
 This module is primarily used by the [nRF Connect](https://github.com/NordicSemiconductor/pc-nrfconnect-launcher) framework and
-[nRF Device Setup]
+[nRF Device Setup](https://github.com/NordicSemiconductor/nrf-device-setup-js).
 
 The following devices are supported:
 
