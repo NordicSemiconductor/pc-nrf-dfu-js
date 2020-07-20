@@ -65,7 +65,7 @@ export default class DfuTransportNoble extends DfuTransportPrn {
         this.dfuPacketCharacteristic = undefined;
 
         // Hard-coded BLE MTU
-        this.mtu = 23;
+        this.mtu = 20;
     }
 
 
