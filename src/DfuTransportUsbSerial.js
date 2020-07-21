@@ -115,8 +115,14 @@ export default class DfuTransportUsbSerial extends DfuTransportSerial {
             });
     }
 
-    // Waits for the target to disconnect. Times out if not
-    // disconnected after 5000 ms.
+    // Ideally, this should *wait* for the DFU target to be disconnected
+    // (by means of listening to the serialport's `close` event). Unfortunately
+    // there are several scenarios where this doesn't happen: macOS and
+    // 64-bit win. Previous implementations ( < v0.2.5) had workarounds,
+    // but those workarounds created problems on a specific USB XHCI root hub
+    // on win7 64-bit.
+    // The current implementation **assumes** that the DFU target will reset
+    // itself.
     waitForDisconnect() {
         if (!this.port || !this.port.isOpen) {
             debug('Port is already closed.');
